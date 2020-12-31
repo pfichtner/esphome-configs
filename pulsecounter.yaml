@@ -1,0 +1,37 @@
+esphome:
+  name: pulsecounter
+  platform: ESP8266
+  board: esp12e
+
+<<: !include .substitutions.yaml
+<<: !include .wifi.yaml
+<<: !include .mqtt.yaml
+<<: !include .management.yaml
+
+sensor:
+  - platform: wifi_signal
+    name: "wifi-signal-strength"
+    update_interval: 60s
+  - platform: pulse_counter
+    pin: GPIO14
+    unit_of_measurement: 'kW'
+    name: 'power'
+    # internal_filter: 500ms
+    # filters:
+    # - or:
+    #   - heartbeat: ${publish_heartbeat}
+    #   - delta: 10
+    # 60s/96rpms
+    # - multiply: 0.625
+    update_interval: 60s
+
+output:
+  - platform: gpio
+    pin: GPIO0
+    inverted: true
+    id: 'led1'
+
+switch:
+  - platform: output
+    name: 'led1'
+    output: 'led1'

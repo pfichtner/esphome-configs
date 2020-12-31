@@ -1,0 +1,11 @@
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  domain: ".local"
+
+#  ap:
+#    ssid: "Fallback AP"
+#    password: !secret wifi_fallback_password
+#    ap_timeout: "3m"
+#captive_portal:
+
