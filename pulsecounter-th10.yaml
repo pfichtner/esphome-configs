@@ -1,0 +1,81 @@
+esphome:
+  name: pulsecounter_th10
+  platform: ESP8266
+  board: esp12e
+
+<<: !include .substitutions.yaml
+
+packages:
+  wifi: !include .wifi.yaml
+  mqtt: !include .mqtt.yaml
+  management: !include .management.yaml
+
+wifi:
+  ap:
+    ssid: "Pulsecounter-Th10"
+    password: "DexiJ1oh3o3f"
+captive_portal:
+
+globals:
+  - id: rpmsPerKwh
+    type: long
+    initial_value: '96'
+
+sensor:
+  - platform: wifi_signal
+    name: "wifi-signal-strength"
+    update_interval: 60s
+  - platform: template
+    id: delta
+    name: "delta"
+    unit_of_measurement: "ms"
+    accuracy_decimals: 0
+    update_interval: 0s
+  - platform: template
+    id: watt
+    name: "watt"
+    unit_of_measurement: "W"
+    accuracy_decimals: 0
+    update_interval: 0s
+  - platform: template
+    id: used
+    name: "used"
+    unit_of_measurement: "Wh"
+    accuracy_decimals: 5
+    update_interval: 0s
+
+binary_sensor:
+  - platform: gpio
+    pin: GPIO14
+    name: 'power'
+    filters:
+      - delayed_on_off: 500ms
+    on_press:
+      - lambda: |-
+          static auto lastUpdate = 0;
+          auto now = millis();
+          if (lastUpdate != 0) {
+            auto deltaMillis = now - lastUpdate;
+            id(delta).publish_state(deltaMillis);
+            // OLD auto wattValue = 60UL * 60UL * 1000UL * 1000UL / (id(rpmsPerKwh) * deltaMillis);
+            auto wattValue = 60UL * 60UL * 1000UL * 1000UL / deltaMillis / id(rpmsPerKwh);
+            id(watt).publish_state(wattValue);
+            auto wh = 1000.0F / id(rpmsPerKwh);
+            id(used).publish_state(wh);
+            // id(mqtt_client).publish("the/topic", "The Payload");
+            // pulsecounter/sensor/delta/state 27868
+            // pulsecounter/sensor/watt/state 1345
+            // pulsecounter/sensor/used/state 10.41667
+          }
+          lastUpdate = now;
+          
+output:
+  - platform: gpio
+    pin: GPIO0
+    inverted: true
+    id: 'led1'
+
+switch:
+  - platform: output
+    name: 'led1'
+    output: 'led1'
