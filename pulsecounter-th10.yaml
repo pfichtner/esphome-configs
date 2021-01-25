@@ -4,17 +4,13 @@ esphome:
   board: esp12e
 
 <<: !include .substitutions.yaml
-
 packages:
   wifi: !include .wifi.yaml
   mqtt: !include .mqtt.yaml
   management: !include .management.yaml
 
-wifi:
-  ap:
-    ssid: "Pulsecounter-Th10"
-    password: "DexiJ1oh3o3f"
-captive_portal:
+mqtt: 
+  reboot_timeout: 1min
 
 globals:
   - id: rpmsPerKwh
@@ -49,7 +45,7 @@ binary_sensor:
     pin: GPIO14
     name: 'power'
     filters:
-      - delayed_on_off: 500ms
+      - delayed_on_off: 50ms
     on_press:
       - lambda: |-
           static auto lastUpdate = 0;
