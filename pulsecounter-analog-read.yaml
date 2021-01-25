@@ -1,0 +1,42 @@
+esphome:
+  name: pulsecounter_analog_read
+  platform: ESP8266
+  board: d1_mini
+
+<<: !include .substitutions.yaml
+<<: !include .wifi.yaml
+<<: !include .mqtt.yaml
+<<: !include .management.yaml
+
+sensor:
+  - platform: wifi_signal
+    name: "wifi-signal-strength"
+    update_interval: 60s
+
+  - platform: adc
+    name: analogvalue
+    pin: A0
+    update_interval: 100ms
+    filters:
+      - multiply: 3.3
+      - or:
+        - heartbeat: 1s
+        - delta: 0.01
+
+binary_sensor:
+  - platform: gpio
+    pin: GPIO14
+    name: 'power'
+    filters:
+      - delayed_on_off: 50ms
+
+output:
+  - platform: gpio
+    pin: GPIO0
+    inverted: true
+    id: 'led1'
+
+switch:
+  - platform: output
+    name: 'led1'
+    output: 'led1'
