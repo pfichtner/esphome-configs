@@ -25,6 +25,7 @@ sensor:
   - platform: wifi_signal
     name: "wifi-signal-strength"
     update_interval: 60s
+
   - platform: template
     id: delta
     name: "delta"
@@ -33,22 +34,28 @@ sensor:
     update_interval: 0s
     lambda: |-
       return id(deltaMillis);
+    on_value:
+      then:
+        - sensor.template.publish:
+            id: watt
+            state: !lambda 'return 60UL * 60UL * 1000UL * 1000UL / id(deltaMillis) / id(rpmsPerKwh);'
+        - sensor.template.publish:
+            id: used
+            state: !lambda 'return 1000.0F / id(rpmsPerKwh);'
+
   - platform: template
     id: watt
     name: "watt"
     unit_of_measurement: "W"
     accuracy_decimals: 0
     update_interval: 0s
-    lambda: |-
-      return 60UL * 60UL * 1000UL * 1000UL / id(deltaMillis) / id(rpmsPerKwh);
+
   - platform: template
     id: used
     name: "used"
     unit_of_measurement: "Wh"
     accuracy_decimals: 5
     update_interval: 0s
-    lambda: |-
-      return 1000.0F / id(rpmsPerKwh);
 
   - platform: adc
     id: analogvalue
