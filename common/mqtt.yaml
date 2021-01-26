@@ -1,3 +1,4 @@
 mqtt:
+  id: mqtt_client
   broker: mqtt
  
