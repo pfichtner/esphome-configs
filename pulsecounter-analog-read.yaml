@@ -82,5 +82,5 @@ display:
     model: "SSD1306 64x48"
     address: 0x3C
     lambda: |-
-      it.printf(0, 0, id(arial12),  TextAlign::TOP_LEFT, "%.2f VCC", id(analogvalue).state);
+      it.printf(0, 0, id(arial12),  TextAlign::TOP_LEFT, "%.2f V", id(analogvalue).state);
       it.printf(0, 12, id(arial12), TextAlign::TOP_LEFT, "%lu Watt", id(wattValue));
