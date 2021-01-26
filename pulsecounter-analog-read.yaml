@@ -1,12 +1,25 @@
 esphome:
   name: pulsecounter_analog_read
   platform: ESP8266
+  # board: esp12e
   board: d1_mini
 
-<<: !include .substitutions.yaml
-<<: !include .wifi.yaml
-<<: !include .mqtt.yaml
-<<: !include .management.yaml
+<<: !include common/substitutions.yaml
+packages: 
+  wifi: !include common/wifi.yaml
+  mqtt: !include common/mqtt.yaml
+  management: !include common/management.yaml
+
+substitutions:
+  status_led: GPIO2
+
+globals:   
+  - id: rpmsPerKwh
+    type: long
+    initial_value: '96'
+  - id: wattValue
+    type: long
+    initial_value: '0'
 
 sensor:
   - platform: wifi_signal
@@ -14,29 +27,60 @@ sensor:
     update_interval: 60s
 
   - platform: adc
-    name: analogvalue
+    id: analogvalue
     pin: A0
-    update_interval: 100ms
+    update_interval: 50ms
     filters:
       - multiply: 3.3
       - or:
         - heartbeat: 1s
         - delta: 0.01
+    on_value:
+      - lambda: |-
+          // if postitioned well the value is lower than 0.35 during silver, so try to position until the led turns off
+          id(status_output).set_level((x - 0.35) / 3.3 );
 
 binary_sensor:
   - platform: gpio
     pin: GPIO14
     name: 'power'
     filters:
-      - delayed_on_off: 50ms
+      - delayed_on_off: 50 ms
+    on_press:
+      - lambda: |-
+          static auto lastUpdate = 0;
+          auto now = millis();
+          if (lastUpdate != 0) {
+            auto deltaMillis = now - lastUpdate;
+            id(wattValue) = 60UL * 60UL * 1000UL * 1000UL / deltaMillis / id(rpmsPerKwh);
+            auto wh = 1000.0F / id(rpmsPerKwh);
+            id(mqtt_client).publish("pulsecounter______/sensor/delta/state", to_string(deltaMillis));
+            id(mqtt_client).publish("pulsecounter______/sensor/watt/state", to_string(id(wattValue)));
+            id(mqtt_client).publish("pulsecounter______/sensor/used/state", to_string(wh));
+          }
+          lastUpdate = now;
 
 output:
-  - platform: gpio
-    pin: GPIO0
+  - platform: esp8266_pwm
+    frequency: 200 Hz
     inverted: true
-    id: 'led1'
+    pin: $status_led
+    id: status_output
 
-switch:
-  - platform: output
-    name: 'led1'
-    output: 'led1'
+# Example configuration entry
+i2c:
+  sda: D2
+  scl: D1
+
+font:
+- file: 'fonts/Arial.ttf'
+  id: arial12
+  size: 12
+
+display:
+  - platform: ssd1306_i2c
+    model: "SSD1306 64x48"
+    address: 0x3C
+    lambda: |-
+      it.printf(0, 0, id(arial12),  TextAlign::TOP_LEFT, "%.2f VCC", id(analogvalue).state);
+      it.printf(0, 12, id(arial12), TextAlign::TOP_LEFT, "%lu Watt", id(wattValue));
