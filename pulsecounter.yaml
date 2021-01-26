@@ -3,11 +3,11 @@ esphome:
   platform: ESP8266
   board: esp12e
 
-<<: !include .substitutions.yaml
+<<: !include common/substitutions.yaml
 packages: 
-  wifi: !include .wifi.yaml
-  mqtt: !include .mqtt.yaml
-  management: !include .management.yaml
+  wifi: !include common/wifi.yaml
+  mqtt: !include common/mqtt.yaml
+  management: !include common/management.yaml
 
 mqtt: 
   reboot_timeout: 1min
