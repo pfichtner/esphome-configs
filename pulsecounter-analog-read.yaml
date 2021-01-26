@@ -17,7 +17,7 @@ globals:
   - id: rpmsPerKwh
     type: long
     initial_value: '96'
-  - id: wattValue
+  - id: deltaMillis
     type: long
     initial_value: '0'
 
@@ -25,6 +25,30 @@ sensor:
   - platform: wifi_signal
     name: "wifi-signal-strength"
     update_interval: 60s
+  - platform: template
+    id: delta
+    name: "delta"
+    unit_of_measurement: "ms"
+    accuracy_decimals: 0
+    update_interval: 0s
+    lambda: |-
+      return id(deltaMillis);
+  - platform: template
+    id: watt
+    name: "watt"
+    unit_of_measurement: "W"
+    accuracy_decimals: 0
+    update_interval: 0s
+    lambda: |-
+      return 60UL * 60UL * 1000UL * 1000UL / id(deltaMillis) / id(rpmsPerKwh);
+  - platform: template
+    id: used
+    name: "used"
+    unit_of_measurement: "Wh"
+    accuracy_decimals: 5
+    update_interval: 0s
+    lambda: |-
+      return 1000.0F / id(rpmsPerKwh);
 
   - platform: adc
     id: analogvalue
@@ -51,12 +75,10 @@ binary_sensor:
           static auto lastUpdate = 0;
           auto now = millis();
           if (lastUpdate != 0) {
-            auto deltaMillis = now - lastUpdate;
-            id(wattValue) = 60UL * 60UL * 1000UL * 1000UL / deltaMillis / id(rpmsPerKwh);
-            auto wh = 1000.0F / id(rpmsPerKwh);
-            id(mqtt_client).publish("pulsecounter______/sensor/delta/state", to_string(deltaMillis));
-            id(mqtt_client).publish("pulsecounter______/sensor/watt/state", to_string(id(wattValue)));
-            id(mqtt_client).publish("pulsecounter______/sensor/used/state", to_string(wh));
+            id(deltaMillis) = now - lastUpdate;
+            id(delta).update();
+            id(watt).update();
+            id(used).update();
           }
           lastUpdate = now;
 
@@ -83,4 +105,4 @@ display:
     address: 0x3C
     lambda: |-
       it.printf(0, 0, id(arial12),  TextAlign::TOP_LEFT, "%.2f V", id(analogvalue).state);
-      it.printf(0, 12, id(arial12), TextAlign::TOP_LEFT, "%lu Watt", id(wattValue));
+      it.printf(0, 12, id(arial12), TextAlign::TOP_LEFT, "%.2f Watt", id(watt).state);
