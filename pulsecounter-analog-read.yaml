@@ -70,8 +70,8 @@ binary_sensor:
           if (lastUpdate != 0) {
             auto deltaMillis = now - lastUpdate;
             id(delta).publish_state(deltaMillis);
-            auto wattValue = 60UL * 60UL * 1000UL * 1000UL / deltaMillis / id(rpmsPerKwh);
-            id(watt).publish_state(wattValue);
+            id(wattValue) = 60UL * 60UL * 1000UL * 1000UL / deltaMillis / id(rpmsPerKwh);
+            id(watt).publish_state(id(wattValue));
             auto wh = 1000.0F / id(rpmsPerKwh);
             id(used).publish_state(wh);
           }
