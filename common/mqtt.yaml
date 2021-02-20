@@ -1,4 +1,5 @@
 mqtt:
   id: mqtt_client
   broker: mqtt
+  reboot_timeout: 1min
  
