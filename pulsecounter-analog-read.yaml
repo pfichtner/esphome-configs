@@ -69,13 +69,32 @@ binary_sensor:
           auto now = millis();
           if (lastUpdate != 0) {
             auto deltaMillis = now - lastUpdate;
-            id(delta).publish_state(deltaMillis);
             id(wattValue) = 60UL * 60UL * 1000UL * 1000UL / deltaMillis / id(rpmsPerKwh);
-            id(watt).publish_state(id(wattValue));
             auto wh = 1000.0F / id(rpmsPerKwh);
+
+            id(delta).publish_state(deltaMillis);
+            id(watt).publish_state(id(wattValue));
             id(used).publish_state(wh);
           }
           lastUpdate = now;
+  - platform: gpio
+    pin: D3
+    id: abutton
+    internal: true
+    filters:
+      - invert:
+    on_press:
+      - display.page.show_next: oled
+      - component.update: oled
+  - platform: gpio
+    pin: D4
+    id: bbutton
+    internal: true
+    filters:
+      - invert:
+    on_press:
+      - display.page.show_previous: oled
+      - component.update: oled
 
 output:
   - platform: esp8266_pwm
@@ -84,7 +103,6 @@ output:
     pin: $status_led
     id: status_output
 
-# Example configuration entry
 i2c:
   sda: D2
   scl: D1
@@ -98,6 +116,24 @@ display:
   - platform: ssd1306_i2c
     model: "SSD1306 64x48"
     address: 0x3C
-    lambda: |-
-      it.printf(0, 0, id(arial12),  TextAlign::TOP_LEFT, "%.2f V", id(analogvalue).state);
-      it.printf(0, 12, id(arial12), TextAlign::TOP_LEFT, "%lu Watt", id(wattValue));
+    rotation: 180
+    id: oled
+    pages:
+      - id: page1
+        lambda: |-
+          it.printf(0, 0, id(arial12),  TextAlign::TOP_LEFT, "%.2f V", id(analogvalue).state);
+          it.printf(0, 12, id(arial12), TextAlign::TOP_LEFT, "%lu Watt", id(wattValue));
+      - id: page2
+        lambda: |-
+          it.print(0, 10, id(arial12), "Page 2");
+      - id: page3
+        lambda: |-
+          it.print(0, 10, id(arial12), "Page 3");
+          it.line(0, 0, 64, 48);
+      - id: page4
+        lambda: |-
+          it.print(0, 10, id(arial12), "Page 4");
+          it.line( 0,  0, 63,  0);
+          it.line( 0,  0,  0, 47);
+          it.line(63, 47, 63,  0);
+          it.line(63, 47,  0, 47);
