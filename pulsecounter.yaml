@@ -1,16 +1,13 @@
 esphome:
   name: pulsecounter
   platform: ESP8266
-  board: esp12e
+  board: d1_mini
 
 <<: !include common/substitutions.yaml
 packages: 
   wifi: !include common/wifi.yaml
   mqtt: !include common/mqtt.yaml
   management: !include common/management.yaml
-
-mqtt: 
-  reboot_timeout: 1min
 
 globals:
   - id: rpmsPerKwh
@@ -53,25 +50,9 @@ binary_sensor:
           if (lastUpdate != 0) {
             auto deltaMillis = now - lastUpdate;
             id(delta).publish_state(deltaMillis);
-            // OLD auto wattValue = 60UL * 60UL * 1000UL * 1000UL / (id(rpmsPerKwh) * deltaMillis);
             auto wattValue = 60UL * 60UL * 1000UL * 1000UL / deltaMillis / id(rpmsPerKwh);
             id(watt).publish_state(wattValue);
             auto wh = 1000.0F / id(rpmsPerKwh);
             id(used).publish_state(wh);
-            // id(mqtt_client).publish("the/topic", "The Payload");
-            // pulsecounter/sensor/delta/state 27868
-            // pulsecounter/sensor/watt/state 1345
-            // pulsecounter/sensor/used/state 10.41667
           }
           lastUpdate = now;
-          
-output:
-  - platform: gpio
-    pin: GPIO0
-    inverted: true
-    id: 'led1'
-
-switch:
-  - platform: output
-    name: 'led1'
-    output: 'led1'
