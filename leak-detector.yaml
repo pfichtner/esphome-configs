@@ -1,0 +1,23 @@
+esphome:
+  name: leakdetector
+  platform: ESP8266
+  board: esp12e
+
+<<: !include common/substitutions.yaml
+packages: 
+  wifi: !include common/wifi.yaml
+  mqtt: !include common/mqtt.yaml
+  management: !include common/management.yaml
+
+# note that on the ESP8266 GPIO16 must be connected to the RST pin so that it will wake up again. 
+deep_sleep:
+  run_duration: 30s
+  sleep_duration: 6h
+
+sensor:
+  - platform: wifi_signal
+    name: "wifi-signal-strength"
+    update_interval: 60s
+  - platform: adc
+    pin: VCC
+    name: "VCC Voltage"
