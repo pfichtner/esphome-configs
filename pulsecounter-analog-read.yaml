@@ -24,12 +24,12 @@ globals:
   - id: wattValue
     type: long
     initial_value: '0'
-  - id: locked_sun
+  - id: unlocked_sun
     type: boolean
-    initial_value: 'true'
-  - id: locked_time
+    initial_value: 'false'
+  - id: unlocked_time
     type: boolean
-    initial_value: 'true'
+    initial_value: 'false'
     
 time:
   - platform: sntp
@@ -47,12 +47,12 @@ time:
                     return hour < 12 || hour > 16;
               then:
                 globals.set:
-                  id: locked_time
-                  value: 'false'
+                  id: unlocked_time
+                  value: 'true'
               else:
                 globals.set:
-                  id: locked_time
-                  value: 'true'
+                  id: unlocked_time
+                  value: 'false'
 
           
 sun:
@@ -70,9 +70,7 @@ sensor:
     # example condition with lambda (see time how to do with then/else and globals.set)
     filters:
       - lambda: |-
-          // this also handles NaN
-          boolean ok = x < 40;
-          id(locked_sun) = !ok;
+          id(unlocked_sun) = x < 40;
           return x;
   - platform: sun
     id: sun_azimuth
@@ -194,6 +192,6 @@ display:
           it.line(63, 47,  0, 47);
       - id: page5
         lambda: |-
-          it.printf(0, 0, id(symbols24),  TextAlign::TOP_LEFT, "%s%s", id(locked_time) ? "${icon_elevation_nok}" : "${icon_elevation_ok}", id(locked_sun) ? "${icon_sun_nok}" : "${icon_sun_ok}");
+          it.printf(0, 0, id(symbols24),  TextAlign::TOP_LEFT, "%s%s", id(unlocked_time) ? "${icon_elevation_ok}" : "${icon_elevation_nok}", id(unlocked_sun) ? "${icon_sun_ok}" : "${icon_sun_nok}");
           it.strftime(0, 24, id(arial12), "%d.%m %H:%M", id(sntp_time).now());
           it.printf(0, 36, id(arial12),  TextAlign::TOP_LEFT, "Sun %.1f°", id(sun_elevation).state);
