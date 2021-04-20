@@ -38,6 +38,7 @@ time:
     on_time:
       - seconds: 0
         minutes: /1
+        # example condition with then/else and globals.set (see sun elevation how to do with lambda)
         then:
           - if:
               condition:
@@ -66,22 +67,13 @@ sensor:
     name: Sun Elevation
     type: elevation
 
-    on_value: 
-      then:
-        - if:
-            condition:
-              - sensor.in_range:
-                  id: sun_elevation
-                  below: 40
-            then:
-              globals.set:
-                id: locked_sun
-                value: 'false'
-            else:
-              globals.set:
-                id: locked_sun
-                value: 'true'
-
+    # example condition with lambda (see time how to do with then/else and globals.set)
+    filters:
+      - lambda: |-
+          // this also handles NaN
+          boolean ok = x < 40;
+          id(locked_sun) = !ok;
+          return x;
   - platform: sun
     id: sun_azimuth
     name: Sun Azimuth
