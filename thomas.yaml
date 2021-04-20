@@ -1,0 +1,74 @@
+esphome:
+  name: thomas
+  platform: ESP8266
+  board: d1_mini
+
+<<: !include common/substitutions.yaml
+packages: 
+  wifi: !include common/wifi.yaml
+  mqtt: !include common/mqtt.yaml
+  management: !include common/management.yaml
+
+substitutions: 
+  dry: "0.662"
+  wet: "0.294"
+  
+globals:   
+  - id: watering_allowed
+    type: boolean
+    initial_value: 'false'
+    
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Berlin
+
+sun:
+  latitude: 48.897489
+  longitude: 8.368140
+  
+sensor:
+  - platform: sun
+    id: sun_elevation
+    name: Sun Elevation
+    type: elevation
+  - platform: adc
+    pin: A0
+    id: moisture
+    update_interval: 5s
+    filters:
+  # Sensor dry around 0.825 Volt, sensor wet around 0.425 Volt. Volts are were flickering
+      - calibrate_linear:
+          - $dry -> 0.0
+          - $wet -> 100.0
+    on_value: 
+      then:
+        - if:
+            condition:
+              and: 
+                - sensor.in_range:
+                    id: moisture
+                    below: 70
+                - lambda: |
+                    auto hour = id(sntp_time).now().hour;
+                    return hour < 12 || hour > 16;
+                - lambda: 'return id(sun_elevation).state < 40;'
+            then:
+              - script.execute: watering_script
+
+
+switch:
+  - platform: gpio
+    id: relay
+    name: "Relay"
+    pin: D2
+
+script:
+  - id: watering_script
+    then:
+    - logger.log: "Watering"
+    - delay: 5s
+    - switch.turn_on: relay
+    - delay: 5s
+    - switch.turn_off: relay
+    - delay: 55s

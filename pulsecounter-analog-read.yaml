@@ -12,6 +12,10 @@ packages:
 
 substitutions:
   status_led: GPIO2
+  icon_sun_nok : "☼"
+  icon_sun_ok : "❄"
+  icon_elevation_ok : "✓"
+  icon_elevation_nok : "✗"
 
 globals:   
   - id: rpmsPerKwh
@@ -20,11 +24,68 @@ globals:
   - id: wattValue
     type: long
     initial_value: '0'
+  - id: locked_sun
+    type: boolean
+    initial_value: 'true'
+  - id: locked_time
+    type: boolean
+    initial_value: 'true'
+    
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Berlin
+    on_time:
+      - seconds: 0
+        minutes: /1
+        then:
+          - if:
+              condition:
+                - lambda: |
+                    auto hour = id(sntp_time).now().hour;
+                    return hour < 12 || hour > 16;
+              then:
+                globals.set:
+                  id: locked_time
+                  value: 'false'
+              else:
+                globals.set:
+                  id: locked_time
+                  value: 'true'
+
+          
+sun:
+  latitude: 48.777929
+  longitude: 8.447560
 
 sensor:
   - platform: wifi_signal
     name: "wifi-signal-strength"
-    update_interval: 60s
+  - platform: sun
+    id: sun_elevation
+    name: Sun Elevation
+    type: elevation
+
+    on_value: 
+      then:
+        - if:
+            condition:
+              - sensor.in_range:
+                  id: sun_elevation
+                  below: 40
+            then:
+              globals.set:
+                id: locked_sun
+                value: 'false'
+            else:
+              globals.set:
+                id: locked_sun
+                value: 'true'
+
+  - platform: sun
+    id: sun_azimuth
+    name: Sun Azimuth
+    type: azimuth
   - platform: template
     id: delta
     name: "delta"
@@ -104,13 +165,15 @@ output:
     id: status_output
 
 i2c:
-  sda: D2
-  scl: D1
 
 font:
 - file: 'fonts/Arial.ttf'
   id: arial12
   size: 12
+- file: 'fonts/opens___.ttf'
+  id: symbols24
+  size: 24
+  glyphs: "${icon_sun_nok}${icon_sun_ok}${icon_elevation_ok}${icon_elevation_nok}"
 
 display:
   - platform: ssd1306_i2c
@@ -137,3 +200,8 @@ display:
           it.line( 0,  0,  0, 47);
           it.line(63, 47, 63,  0);
           it.line(63, 47,  0, 47);
+      - id: page5
+        lambda: |-
+          it.printf(0, 0, id(symbols24),  TextAlign::TOP_LEFT, "%s%s", id(locked_time) ? "${icon_elevation_nok}" : "${icon_elevation_ok}", id(locked_sun) ? "${icon_sun_nok}" : "${icon_sun_ok}");
+          it.strftime(0, 24, id(arial12), "%d.%m %H:%M", id(sntp_time).now());
+          it.printf(0, 36, id(arial12),  TextAlign::TOP_LEFT, "Sun %.1f°", id(sun_elevation).state);
