@@ -3,6 +3,8 @@ esphome:
   platform: ESP8266
   # board: esp12e
   board: d1_mini
+  includes:
+    - includes/util.h
 
 <<: !include common/substitutions.yaml
 packages: 
@@ -191,6 +193,20 @@ display:
           it.line(63, 47, 63,  0);
           it.line(63, 47,  0, 47);
       - id: page5
+        lambda: |-
+          auto now = id(sntp_time).now();
+          if (now.is_valid()) {
+            it.filled_rectangle(0,  0, map(now.hour,   0, 23, 0, 63), 10);
+            it.filled_rectangle(0, 11, map(now.minute, 0, 59, 0, 63),  6);
+            it.filled_rectangle(0, 18, map(now.second, 0, 59, 0, 63),  2);
+          }
+
+          auto elevation = id(sun_elevation).state;
+          if (!isnan(elevation)) {
+            it.filled_rectangle(0, 22, map(elevation, 0, 90, 0, 63), 20);
+          }
+
+      - id: page6
         lambda: |-
           it.printf(0, 0, id(symbols24),  TextAlign::TOP_LEFT, "%s%s", id(unlocked_time) ? "${icon_elevation_ok}" : "${icon_elevation_nok}", id(unlocked_sun) ? "${icon_sun_ok}" : "${icon_sun_nok}");
           it.strftime(0, 24, id(arial12), "%d.%m %H:%M", id(sntp_time).now());
