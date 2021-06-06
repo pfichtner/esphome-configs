@@ -1,0 +1,30 @@
+# showcase: 433MHz Daten empfangen, seltsamerweise werden die Daten meiner handgestrickten nodes ausgegeben, nicht aber das Schalten einer Steckdose
+
+esphome:
+  name: 433mhzreceiver
+  platform: ESP8266
+  board: d1
+
+<<: !include common/substitutions.yaml
+packages: 
+  wifi: !include common/wifi.yaml
+  mqtt: !include common/mqtt.yaml
+  management: !include common/management.yaml
+  
+logger: 
+
+sensor:
+  - platform: wifi_signal
+    name: "wifi-signal-strength"
+    update_interval: 60s
+  - platform: adc
+    pin: VCC
+    name: "VCC Voltage"
+
+remote_receiver:
+  pin: GPIO2
+  dump: rc_switch
+  tolerance: 50%
+  filter: 10us
+  idle: 4ms
+  buffer_size: 2kb
