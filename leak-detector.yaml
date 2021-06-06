@@ -1,3 +1,5 @@
+# showcase: ESP via HW reset aufwachen lassen (leak detected)
+
 esphome:
   name: leakdetector
   platform: ESP8266
@@ -9,10 +11,13 @@ packages:
   mqtt: !include common/mqtt.yaml
   management: !include common/management.yaml
 
-# note that on the ESP8266 GPIO16 must be connected to the RST pin so that it will wake up again. 
+logger:
+
+# note that on the ESP8266 GPIO16 (D0) must be connected to the RST pin so that it will wake up again. 
 deep_sleep:
-  run_duration: 30s
-  sleep_duration: 6h
+  run_duration: 20s
+  sleep_duration: 1min
+  # sleep_duration: 6h
 
 sensor:
   - platform: wifi_signal
@@ -21,3 +26,10 @@ sensor:
   - platform: adc
     pin: VCC
     name: "VCC Voltage"
+
+binary_sensor:
+  - platform: gpio
+    id: washingmachine_leak
+    pin:
+      number: GPIO2 # (D4)
+      inverted: True

@@ -1,3 +1,9 @@
+# showcase #1: Internal LED via PWM leuchten lassen
+# showcase #2: Display durchblättern via HW-Buttons
+# showcase #3: Icons
+# showcase #4: cron: Jede Minute werden "lock" Attribute berechnet (Sonnenstand und Stunden)
+# showcase #5: Eigene map Function via include eingebunden (wird benutzt um Balken zu zeichnen)
+
 esphome:
   name: pulsecounter_analog_read
   platform: ESP8266

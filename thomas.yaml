@@ -1,7 +1,16 @@
+# showcase #1: Uhrzeit holen
+# showcase #2: Sonnenstand berechnen
+# showcase #3: Giest, sobald moisture unter 70% fällt, aber nur, wenn sun_elevation < 40 und vor 12 Uhr oder nach 16 Uhr
+# showcase #4: Script: Messwert wird alle 5 Sekunden genommen, wenn aber gießen bereits ausgeführt wird passiert nichts (script mode default to "single")
+
 esphome:
-  name: thomas
+  name: "thomas"
   platform: ESP8266
   board: d1_mini
+
+substitutions:
+  dry: "0.662"
+  wet: "0.294"
 
 <<: !include common/substitutions.yaml
 packages: 
@@ -9,10 +18,6 @@ packages:
   mqtt: !include common/mqtt.yaml
   management: !include common/management.yaml
 
-substitutions: 
-  dry: "0.662"
-  wet: "0.294"
-  
 globals:   
   - id: watering_allowed
     type: boolean
