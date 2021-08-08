@@ -1,0 +1,68 @@
+esphome:
+  name: $devicename
+  platform: ESP8266
+  board: d1_mini
+
+<<: !include common/substitutions.yaml
+packages: 
+  wifi: !include common/wifi.yaml
+  mqtt: !include common/mqtt.yaml
+  management: !include common/management.yaml
+  
+wifi:
+  fast_connect: true
+
+ota:
+  safe_mode: false
+
+substitutions:
+  devicename: vorratsraum
+  run_duration: 20s
+  sleep_duration: 1h
+  # sleep_duration: 5min
+  update_interval: $run_duration
+  # update_interval: never # with never we would have to trigger readings on boot
+
+logger:
+  level: INFO
+
+# note that on the ESP8266 GPIO16 (D0) must be connected to the RST pin so that it will wake up again. 
+deep_sleep:
+  id: deep_sleep_1
+  run_duration: $run_duration
+  sleep_duration: $sleep_duration
+  
+mqtt:
+  on_message:
+    - topic: $devicename/ota_mode
+      payload: 'ON'
+      then:
+        - deep_sleep.prevent: deep_sleep_1
+    - topic: $devicename/sleep_mode
+      payload: 'ON'
+      then:
+        - deep_sleep.enter: deep_sleep_1
+
+sensor:
+  - platform: wifi_signal
+    name: "wifi-signal-strength"
+    update_interval: $update_interval
+  - platform: adc
+    pin: VCC
+    name: "VCC Voltage"
+  - platform: dht
+    model: DHT22
+    pin: D1
+    temperature:
+      name: "temperature"
+    humidity:
+      name: "humidity"
+    update_interval: $update_interval
+
+switch:
+  - platform: gpio
+    pin: D2
+    id: power_dht22
+    internal: true
+    # Will power on the sensor. When ESP goes into deep sleep gpio no longer gets power  
+    restore_mode: ALWAYS_ON
