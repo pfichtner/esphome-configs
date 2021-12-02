@@ -17,7 +17,7 @@ ota:
 
 substitutions:
   devicename: vorratsraum
-  run_duration: 20s
+  run_duration: 25s
   sleep_duration: 1h
   # sleep_duration: 5min
   update_interval: $run_duration
@@ -47,9 +47,13 @@ sensor:
   - platform: wifi_signal
     name: "wifi-signal-strength"
     update_interval: $update_interval
-  - platform: adc
-    pin: VCC
-    name: "VCC Voltage"
+    # since we use an LDO, we always will have 5V, so we connect the LDO#s input tu A0
+  #- platform: adc
+  #  pin: A0
+  #  name: "VCC Voltage"
+  #  filters:
+  #    - multiply: 3.3
+  #  update_interval: $update_interval
   - platform: dht
     model: DHT22
     pin: D1
