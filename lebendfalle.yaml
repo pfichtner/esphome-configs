@@ -1,0 +1,60 @@
+esphome:
+  name: lebendfalle
+  platform: ESP8266
+  board: d1_mini
+  # board: esp01
+
+<<: !include common/substitutions.yaml
+packages: 
+  wifi: !include common/wifi.yaml
+  mqtt: !include common/mqtt.yaml
+  management: !include common/management.yaml
+
+sensor:
+  - platform: wifi_signal
+    name: "wifi-signal-strength"
+    update_interval: 5min
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: D5
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    id: tuere
+    name: 'tuere'
+    filters:
+      - delayed_on: 100ms
+      - delayed_off: 100ms
+    on_press:
+      - script.execute: script1
+    on_release:
+      - script.stop: script1
+      
+switch:
+  - platform: gpio
+    pin: D4
+    inverted: true
+    id: status_indicator
+    internal: true
+
+interval:
+  - interval: 10min
+    then:
+      lambda: id(tuere).publish_state(id(tuere).state);
+
+script:
+  - id: script1
+    mode: queued
+    then:
+      - switch.turn_on: status_indicator
+      - delay: 100ms
+      - switch.turn_off: status_indicator
+      - delay: 100ms
+      - switch.turn_on: status_indicator
+      - delay: 100ms
+      - switch.turn_off: status_indicator
+      - delay: 2s
+      - script.execute: script1
