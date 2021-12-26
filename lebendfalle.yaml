@@ -3,12 +3,19 @@ esphome:
   platform: ESP8266
   board: d1_mini
   # board: esp01
+  on_boot:
+    then:
+      - script.execute: script_heartbeat
 
 <<: !include common/substitutions.yaml
 packages: 
   wifi: !include common/wifi.yaml
   mqtt: !include common/mqtt.yaml
   management: !include common/management.yaml
+
+globals:
+   - id: catched
+     type: long
 
 sensor:
   - platform: wifi_signal
@@ -29,9 +36,17 @@ binary_sensor:
       - delayed_on: 100ms
       - delayed_off: 100ms
     on_press:
-      - script.execute: script1
+      - script.stop: script_heartbeat
+      - script.execute: script_catched
+      - globals.set:
+          id: catched
+          value: !lambda return millis();
     on_release:
-      - script.stop: script1
+      - script.stop: script_catched
+      - script.execute: script_heartbeat
+      - globals.set:
+          id: catched
+          value: "0"
       
 switch:
   - platform: gpio
@@ -46,15 +61,19 @@ interval:
       lambda: id(tuere).publish_state(id(tuere).state);
 
 script:
-  - id: script1
+  - id: script_heartbeat
     mode: queued
     then:
       - switch.turn_on: status_indicator
-      - delay: 100ms
+      - delay: 3s
       - switch.turn_off: status_indicator
-      - delay: 100ms
+      - delay: 500ms
+      - script.execute: script_heartbeat
+  - id: script_catched
+    mode: queued
+    then:
       - switch.turn_on: status_indicator
-      - delay: 100ms
+      - delay: 50ms
       - switch.turn_off: status_indicator
-      - delay: 2s
-      - script.execute: script1
+      - delay: 50ms
+      - script.execute: script_catched
