@@ -14,13 +14,21 @@ packages:
   management: !include common/management.yaml
 
 globals:
-   - id: catched
+   - id: catched_value
      type: long
 
 sensor:
   - platform: wifi_signal
     name: "wifi-signal-strength"
     update_interval: 5min
+  - platform: template
+    name: 'catched'
+    unit_of_measurement: "secs"
+    accuracy_decimals: 0
+    lambda: |-
+      long tmp = long(id(catched_value));
+      return tmp == 0 ? 0 : (millis() - tmp) / 1000;
+    update_interval: 60s
 
 binary_sensor:
   - platform: gpio
@@ -31,7 +39,7 @@ binary_sensor:
         input: true
         pullup: true
     id: tuere
-    name: 'tuere'
+    name: tuere
     filters:
       - delayed_on: 100ms
       - delayed_off: 100ms
@@ -39,13 +47,13 @@ binary_sensor:
       - script.stop: script_heartbeat
       - script.execute: script_catched
       - globals.set:
-          id: catched
+          id: catched_value
           value: !lambda return millis();
     on_release:
       - script.stop: script_catched
       - script.execute: script_heartbeat
       - globals.set:
-          id: catched
+          id: catched_value
           value: "0"
       
 switch:
@@ -54,11 +62,6 @@ switch:
     inverted: true
     id: status_indicator
     internal: true
-
-interval:
-  - interval: 10min
-    then:
-      lambda: id(tuere).publish_state(id(tuere).state);
 
 script:
   - id: script_heartbeat
