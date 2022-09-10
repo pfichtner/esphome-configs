@@ -1,0 +1,81 @@
+esphome:
+  name: "shelly-ssr"
+  platform: ESP8266
+  board: d1_mini
+
+<<: !include common/substitutions.yaml
+packages: 
+  wifi: !include common/wifi.yaml
+  mqtt: !include common/mqtt.yaml
+  management: !include common/management.yaml
+
+logger:
+  level: DEBUG
+
+globals:
+   - id: sleeptime
+     type: int
+     restore_value: no
+     initial_value: '0'
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Berlin
+
+sun:
+  latitude: 48.7782763
+  longitude: 8.4472173
+  on_sunrise:
+    - then:
+        - switch.turn_off: relay_1
+  
+sensor:
+  - platform: sun
+    id: sun_elevation
+    type: elevation
+
+binary_sensor:
+  - platform: gpio
+    pin: 
+      number: D3
+      inverted: true
+    id: button_1
+    on_click:
+    - min_length: 1ms
+      max_length: 500ms
+      then: 
+        - globals.set:
+            id: sleeptime
+            value: "5"
+        - script.execute: delay_script
+    - min_length: 2s
+      then: 
+        - switch.toggle: relay_1
+    on_double_click:
+      then: 
+        - globals.set:
+            id: sleeptime
+            value: "20"
+        - script.execute: delay_script
+
+switch:
+  - platform: gpio
+    id: relay_1
+    name: "relay_1"
+    pin: 
+      number: D1
+      inverted: true
+
+script:
+  - id: delay_script
+    mode: restart
+    then:
+    - logger.log: 
+        format: "Sleeptime %s"
+        args: [ id(sleeptime) ]
+    - switch.turn_on: relay_1
+    - delay: !lambda return id(sleeptime) * 1000;
+    - delay: 3s
+    - switch.turn_off: relay_1
+
