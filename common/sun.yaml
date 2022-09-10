@@ -1,0 +1,7 @@
+packages: 
+  time: !include time.yaml
+
+sun:
+  latitude: !secret sun_latitude
+  longitude: !secret sun_longitude
+

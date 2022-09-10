@@ -1,0 +1,5 @@
+time:
+  - platform: sntp
+    timezone: Europe/Berlin
+    servers: sntp.local
+

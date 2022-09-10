@@ -8,9 +8,7 @@ packages:
   wifi: !include common/wifi.yaml
   mqtt: !include common/mqtt.yaml
   management: !include common/management.yaml
-
-logger:
-  level: DEBUG
+  sun: !include common/sun.yaml
 
 globals:
    - id: sleeptime
@@ -18,14 +16,7 @@ globals:
      restore_value: no
      initial_value: '0'
 
-time:
-  - platform: sntp
-    id: sntp_time
-    timezone: Europe/Berlin
-
 sun:
-  latitude: 48.7782763
-  longitude: 8.4472173
   on_sunrise:
     - then:
         - switch.turn_off: relay_1
@@ -45,7 +36,7 @@ binary_sensor:
     on_multi_click:
     - timing:
         - ON for at most 1s
-        - OFF for at most 1s
+        - OFF for at most 0.5s
         - ON for at most 1s
         - OFF for at least 0.2s
       then:
@@ -55,13 +46,12 @@ binary_sensor:
             value: "20"
         - script.execute: delay_script
     - timing:
-        - ON for at least 1s
-        - OFF for at least 0.5s
+        - ON for at least 2s
       then:
         - logger.log: "Single Long Clicked"
         - switch.toggle: relay_1
     - timing:
-        - ON for at most 1s
+        - ON for at most 1.5s
         - OFF for at least 0.5s
       then:
         - logger.log: "Single Short Clicked"
