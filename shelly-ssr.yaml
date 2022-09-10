@@ -41,41 +41,46 @@ binary_sensor:
       number: D3
       inverted: true
     id: button_1
-    on_click:
-    - min_length: 1ms
-      max_length: 500ms
-      then: 
-        - globals.set:
-            id: sleeptime
-            value: "5"
-        - script.execute: delay_script
-    - min_length: 2s
-      then: 
-        - switch.toggle: relay_1
-    on_double_click:
-      then: 
+
+    on_multi_click:
+    - timing:
+        - ON for at most 1s
+        - OFF for at most 1s
+        - ON for at most 1s
+        - OFF for at least 0.2s
+      then:
+        - logger.log: "Double Clicked"
         - globals.set:
             id: sleeptime
             value: "20"
+        - script.execute: delay_script
+    - timing:
+        - ON for at least 1s
+        - OFF for at least 0.5s
+      then:
+        - logger.log: "Single Long Clicked"
+        - switch.toggle: relay_1
+    - timing:
+        - ON for at most 1s
+        - OFF for at least 0.5s
+      then:
+        - logger.log: "Single Short Clicked"
+        - globals.set:
+            id: sleeptime
+            value: "5"
         - script.execute: delay_script
 
 switch:
   - platform: gpio
     id: relay_1
     name: "relay_1"
-    pin: 
-      number: D1
-      inverted: true
+    pin: D1
 
 script:
   - id: delay_script
     mode: restart
     then:
-    - logger.log: 
-        format: "Sleeptime %s"
-        args: [ id(sleeptime) ]
     - switch.turn_on: relay_1
-    - delay: !lambda return id(sleeptime) * 1000;
-    - delay: 3s
+    - delay: !lambda return long(id(sleeptime)) * 1000;
     - switch.turn_off: relay_1
 
