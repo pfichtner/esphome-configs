@@ -9,7 +9,7 @@ packages:
   mqtt: !include common/mqtt.yaml
   management: !include common/management.yaml
   sun: !include common/sun.yaml
-
+  
 globals:
    - id: sleeptime
      type: int
@@ -18,9 +18,10 @@ globals:
 
 sun:
   on_sunrise:
-    - then:
+    - elevation: 10°
+      then:
         - switch.turn_off: relay_1
-  
+
 sensor:
   - platform: sun
     id: sun_elevation
