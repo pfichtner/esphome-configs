@@ -1,5 +1,7 @@
+<<: !include substitutions.yaml
+
 time:
   - platform: sntp
-    timezone: Europe/Berlin
-    servers: sntp.local
+    timezone: ${time_timezone}
+    servers: ${time_servers}
 

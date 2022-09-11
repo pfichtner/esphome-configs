@@ -1,7 +1,9 @@
+<<: !include substitutions.yaml
+
 packages: 
   time: !include time.yaml
 
 sun:
-  latitude: !secret sun_latitude
-  longitude: !secret sun_longitude
+  latitude: ${sun_latitude}
+  longitude: ${sun_longitude}
 
