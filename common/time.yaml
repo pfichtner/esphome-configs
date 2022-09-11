@@ -3,5 +3,5 @@
 time:
   - platform: sntp
     timezone: ${time_timezone}
-    servers: ${time_servers}
+#   servers: ${time_servers}
 
