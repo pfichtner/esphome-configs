@@ -7,8 +7,7 @@ esphome:
 #  libraries:
 #    - https://github.com/dl9sec/ArduinoSIP.git#c4baefe
   includes:
-    - "ArduinoSIP/ArduinoSIP.cpp"
-    - "ArduinoSIP/ArduinoSIP.h"
+    - "ArduinoSIP/SipSwitch.h"
 
 <<: !include common/substitutions.yaml
 packages: 
@@ -22,6 +21,16 @@ sensor:
   - platform: wifi_signal
     name: "wifi-signal-strength"
     update_interval: 60s
+
+switch:
+- platform: custom
+  lambda: |-
+    auto sipswitch = new SipSwitch();
+    App.register_component(sipswitch);
+    return {sipswitch};
+  switches:
+    id: sip
+    name: "My Custom Switches"
 
 remote_receiver:
   pin:
@@ -50,15 +59,7 @@ binary_sensor:
     on_press:
       then: 
         - logger.log: "Ding dong"
-        - lambda: |-
-            char acSipOut[2048];
-            Sip aSip(acSipOut, sizeof(acSipOut));
-            ESP_LOGW("SIP", "Sip client created");
-            //aSip.Init("192.168.1.234", 5060, WiFi.localIP().toString().c_str(), 5060, "doorbellUser", "Ak710q5&OHzE", 15);            
-            aSip.Init("192.168.1.234", 5060, "192,168.1.199", 5060, "doorbellUser", "Ak710q5&OHzE", 15);            
-            delay(1000);
-            ESP_LOGW("SIP", "Sip client connected");
-            aSip.Dial("**9", "Doorbell");
-            ESP_LOGW("SIP", "Sip number dialed");
+        - switch.turn_off: sip
     filters:
-      delayed_off: 3.5s
+      delayed_off: 5s
+
