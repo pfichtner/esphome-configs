@@ -1,9 +1,14 @@
-# showcase: 433MHz Daten empfangen, seltsamerweise werden die Daten meiner handgestrickten nodes ausgegeben, nicht aber das Schalten einer Steckdose
-
 esphome:
   name: 433mhzreceiver
   platform: ESP8266
-  board: d1
+# board: d1
+  board: d1_mini
+
+#  libraries:
+#    - https://github.com/dl9sec/ArduinoSIP.git#c4baefe
+  includes:
+    - "ArduinoSIP/ArduinoSIP.cpp"
+    - "ArduinoSIP/ArduinoSIP.h"
 
 <<: !include common/substitutions.yaml
 packages: 
@@ -17,14 +22,43 @@ sensor:
   - platform: wifi_signal
     name: "wifi-signal-strength"
     update_interval: 60s
-  - platform: adc
-    pin: VCC
-    name: "VCC Voltage"
 
 remote_receiver:
-  pin: GPIO2
-  dump: rc_switch
-  tolerance: 50%
-  filter: 10us
+  pin:
+    # number: D0 # GPIO16
+    number: D1
+    inverted: true
+    mode:
+      input: true
+      pullup: true
+    
+  # https://community.home-assistant.io/t/turning-433mhz-doorbell-into-a-smart-doorbell/373214/2
+  dump:  rc_switch
+  tolerance: 60%
+  # tolerance: 25%
+  filter: 250us
   idle: 4ms
-  buffer_size: 2kb
+  buffer_size: 2kb  
+  
+
+binary_sensor:
+  - platform: remote_receiver
+    name: "one"
+    rc_switch_raw: 
+      protocol: 2
+      code: "01011010010100011110"
+    on_press:
+      then: 
+        - logger.log: "Ding dong"
+        - lambda: |-
+            char acSipOut[2048];
+            Sip aSip(acSipOut, sizeof(acSipOut));
+            ESP_LOGW("SIP", "Sip client created");
+            //aSip.Init("192.168.1.234", 5060, WiFi.localIP().toString().c_str(), 5060, "doorbellUser", "Ak710q5&OHzE", 15);            
+            aSip.Init("192.168.1.234", 5060, "192,168.1.199", 5060, "doorbellUser", "Ak710q5&OHzE", 15);            
+            delay(1000);
+            ESP_LOGW("SIP", "Sip client connected");
+            aSip.Dial("**9", "Doorbell");
+            ESP_LOGW("SIP", "Sip number dialed");
+    filters:
+      delayed_off: 3.5s
