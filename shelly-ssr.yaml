@@ -25,34 +25,6 @@ globals:
      restore_value: no
      initial_value: '0'
 
-# WiFi and logger due to problem ERROR Error binary size: Unknown error from ESP
-wifi:
-  ap:
-    ssid: "Shelly Fallback Hotspot"
-    password: "Start123"
-logger: 
-  level: VERY_VERBOSE
-ota:
-  on_error:
-    then:
-      - logger.log:
-          format: "OTA update error %d"
-          args: ["x"]
-  on_state_change:
-    then:
-      - logger.log:
-          format: "OTA state change %d"
-          args: ["state"]
-
-# This feature is only available with frameworks ['arduino'].
-#web_server:
-#  port: 80
-# captive_portal:
-# This feature is only available with frameworks ['arduino'].
-
-
-
-
 sun:
   on_sunrise:
     - elevation: 10°
@@ -122,4 +94,3 @@ script:
     - switch.turn_on: relay_1
     - delay: !lambda return long(id(sleeptime)) * 1000;
     - switch.turn_off: relay_1
-
