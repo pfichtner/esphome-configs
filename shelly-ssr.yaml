@@ -1,7 +1,7 @@
 esphome:
   name: "shelly-ssr"
-  platform: ESP8266
-  board: d1_mini
+  platformio_options:
+    board_build.f_cpu: 160000000L
 
 <<: !include common/substitutions.yaml
 packages: 
@@ -9,12 +9,49 @@ packages:
   mqtt: !include common/mqtt.yaml
   management: !include common/management.yaml
   sun: !include common/sun.yaml
-  
+
+esp32:
+  board: esp32doit-devkit-v1
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_FREERTOS_UNICORE: y
+      CONFIG_ESP32_DEFAULT_CPU_FREQ_160: y
+      CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ: "160"
+
 globals:
    - id: sleeptime
      type: int
      restore_value: no
      initial_value: '0'
+
+# WiFi and logger due to problem ERROR Error binary size: Unknown error from ESP
+wifi:
+  ap:
+    ssid: "Shelly Fallback Hotspot"
+    password: "Start123"
+logger: 
+  level: VERY_VERBOSE
+ota:
+  on_error:
+    then:
+      - logger.log:
+          format: "OTA update error %d"
+          args: ["x"]
+  on_state_change:
+    then:
+      - logger.log:
+          format: "OTA state change %d"
+          args: ["state"]
+
+# This feature is only available with frameworks ['arduino'].
+#web_server:
+#  port: 80
+# captive_portal:
+# This feature is only available with frameworks ['arduino'].
+
+
+
 
 sun:
   on_sunrise:
@@ -29,9 +66,7 @@ sensor:
 
 binary_sensor:
   - platform: gpio
-    pin: 
-      number: D3
-      inverted: true
+    pin: GPIO4
     id: button_1
 
     on_multi_click:
@@ -65,7 +100,7 @@ switch:
 # connected to hardware and not exposed
   - platform: gpio
     id: relay_1
-    pin: D1
+    pin: GPIO26
 
 # exposed as mqtt (so here we can stop the script on any message received)
   - platform: template
