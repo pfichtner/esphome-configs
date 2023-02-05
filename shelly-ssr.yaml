@@ -36,6 +36,17 @@ sensor:
     id: sun_elevation
     type: elevation
 
+# Receive sleep time over MQTT
+  - platform: mqtt_subscribe
+    id: on_for
+    topic: "on_for"
+    on_value:
+      - then:
+        - globals.set:
+            id: sleeptime
+            value: !lambda return int(x);
+        - script.execute: delay_script
+
 binary_sensor:
   - platform: gpio
     pin: GPIO4
