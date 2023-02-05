@@ -1,5 +1,9 @@
 substitutions:
   device_name: "shelly-ssr"
+  # Higher value gives lower watt readout
+  current_res: "0.001"
+  # Lower value gives lower voltage readout
+  voltage_div: "1925"
 
 esphome:
   name: ${device_name}
@@ -38,7 +42,6 @@ sensor:
   - platform: sun
     id: sun_elevation
     type: elevation
-
 # Receive sleep time over MQTT
   - platform: mqtt_subscribe
     name: on_for
@@ -49,6 +52,79 @@ sensor:
             id: sleeptime
             value: !lambda return int(x);
         - script.execute: delay_script
+
+  - platform: ntc
+    sensor: temp_resistance_reading
+    name: "Temperature"
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    calibration:
+      b_constant: 3350
+      reference_resistance: 10kOhm
+      reference_temperature: 298.15K
+    on_value_range:
+      - above: "80.0"
+        then:
+          - switch.turn_off: relay_1
+  - platform: resistance
+    id: temp_resistance_reading
+    sensor: temp_analog_reading
+    configuration: DOWNSTREAM
+    resistor: 10kOhm
+  - platform: adc
+    id: temp_analog_reading
+    pin: GPIO32
+    attenuation: 11db
+  - platform: adc
+    name: "Relay Supply Voltage"
+    pin: GPIO33
+    attenuation: 11db
+    filters:
+      - multiply: 8
+  - platform: hlw8012
+    model: BL0937
+    sel_pin:
+      number: GPIO23
+      inverted: true
+    cf_pin: GPIO5
+    cf1_pin: GPIO18
+    current_resistor: ${current_res}
+    voltage_divider: ${voltage_div}
+    current:
+      name: "Current"
+      unit_of_measurement: A
+      accuracy_decimals: 3
+    voltage:
+      name: "Voltage"
+      unit_of_measurement: V
+      accuracy_decimals: 1
+    power:
+      name: "Power"
+      unit_of_measurement: W
+      id: power
+      filters:
+        # Map from sensor -> measured value
+        - calibrate_linear:
+            -    0.0  ->    0.0
+            -   49.27 ->   51.0
+            -  727.76 ->  762.0
+            - 1483.00 -> 1550.0
+            - 3004.91 -> 3140.0
+        # Make everything below 2W appear as just 0W.
+        # Furthermore it corrects 0.5W for the power usage of the plug.
+        - lambda: auto cor = (x - 0.5); if (cor < 2) return 0; else return cor;
+      on_value_range:
+        - above: "3600"
+          then:
+            - switch.turn_off: relay_1
+    change_mode_every: 2
+    update_interval: 10s
+  - platform: total_daily_energy
+    name: "Daily energy consumed"
+    power_id: power
+    filters:
+        - multiply: 0.001
+    unit_of_measurement: kWh
 
 binary_sensor:
   - platform: gpio
