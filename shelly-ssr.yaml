@@ -77,6 +77,7 @@ binary_sensor:
         - ON for at least 1.5s
       then:
         - logger.log: "Single Long Clicked"
+        - script.stop: delay_script
         - switch.toggle: relay_1
 
 switch:
