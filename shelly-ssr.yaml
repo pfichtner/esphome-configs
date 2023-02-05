@@ -1,5 +1,8 @@
+substitutions:
+  device_name: "shelly-ssr"
+
 esphome:
-  name: "shelly-ssr"
+  name: ${device_name}
   platformio_options:
     board_build.f_cpu: 160000000L
 
@@ -38,8 +41,8 @@ sensor:
 
 # Receive sleep time over MQTT
   - platform: mqtt_subscribe
-    id: on_for
-    topic: "on_for"
+    name: on_for
+    topic: "${device_name}/on_for"
     on_value:
       - then:
         - globals.set:
