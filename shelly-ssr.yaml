@@ -43,30 +43,30 @@ binary_sensor:
 
     on_multi_click:
     - timing:
-        - ON for at most 1s
-        - OFF for at most 0.5s
-        - ON for at most 1s
-        - OFF for at least 0.2s
+        - ON for at most 1.5s
+        - OFF for at least 0.25s
       then:
-        - logger.log: "Double Clicked"
+        - logger.log: "Single Short Clicked"
         - globals.set:
             id: sleeptime
-            value: "20"
+            value: "120"
+        - script.execute: delay_script
+    - timing:
+        - ON for at most 1s
+        - OFF for at most 0.25s
+        - ON for at most 1s
+        - OFF for at least 0.25s
+      then:
+        - logger.log: "Double Short Clicked"
+        - globals.set:
+            id: sleeptime
+            value: "300"
         - script.execute: delay_script
     - timing:
         - ON for at least 1.5s
       then:
         - logger.log: "Single Long Clicked"
         - switch.toggle: relay_1
-    - timing:
-        - ON for at most 1.5s
-        - OFF for at least 0.5s
-      then:
-        - logger.log: "Single Short Clicked"
-        - globals.set:
-            id: sleeptime
-            value: "5"
-        - script.execute: delay_script
 
 switch:
 # connected to hardware and not exposed
