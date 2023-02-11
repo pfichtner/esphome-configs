@@ -31,6 +31,14 @@ globals:
      type: int
      restore_value: no
      initial_value: '0'
+   - id: singleshortdelay
+     type: int
+     restore_value: yes
+     initial_value: '120'
+   - id: doubleshortdelay
+     type: int
+     restore_value: yes
+     initial_value: '300'
 
 sun:
   on_sunrise:
@@ -53,6 +61,22 @@ sensor:
             value: !lambda return int(x);
         - script.execute: delay_script
 
+  - platform: mqtt_subscribe
+    name: set_singleshortdelay
+    topic: "${device_name}/singleshortdelay/set"
+    on_value:
+      - then:
+        - globals.set:
+            id: singleshortdelay
+            value: !lambda return int(x);
+  - platform: mqtt_subscribe
+    name: set_doubleshortdelay
+    topic: "${device_name}/doubleshortdelay/set"
+    on_value:
+      - then:
+        - globals.set:
+            id: doubleshortdelay
+            value: !lambda return int(x);
   - platform: ntc
     sensor: temp_resistance_reading
     name: "Temperature"
@@ -139,7 +163,8 @@ binary_sensor:
         - logger.log: "Single Short Clicked"
         - globals.set:
             id: sleeptime
-            value: "120"
+            value: !lambda |
+              return id(singleshortdelay);
         - script.execute: delay_script
     - timing:
         - ON for at most 1s
@@ -150,7 +175,8 @@ binary_sensor:
         - logger.log: "Double Short Clicked"
         - globals.set:
             id: sleeptime
-            value: "300"
+            value: !lambda |
+              return id(doubleshortdelay);
         - script.execute: delay_script
     - timing:
         - ON for at least 1.5s
