@@ -170,8 +170,7 @@ binary_sensor:
         - logger.log: "Single Short Clicked"
         - globals.set:
             id: sleeptime
-            value: !lambda |
-              return id(singleshortdelay);
+            value: !lambda return id(singleshortdelay);
         - script.execute: delay_script
     - timing:
         - ON for at most 1s
@@ -182,8 +181,7 @@ binary_sensor:
         - logger.log: "Double Short Clicked"
         - globals.set:
             id: sleeptime
-            value: !lambda |
-              return id(doubleshortdelay);
+            value: !lambda return id(doubleshortdelay);
         - script.execute: delay_script
     - timing:
         - ON for at least 1.5s
