@@ -46,11 +46,8 @@ sun:
       then:
         - switch.turn_off: relay_1
 
-sensor:
-  - platform: sun
-    id: sun_elevation
-    type: elevation
-# Receive sleep time over MQTT
+text_sensor:
+  # Receive sleep time over MQTT
   - platform: mqtt_subscribe
     name: on_for
     topic: "${device_name}/on_for"
@@ -58,10 +55,20 @@ sensor:
       - then:
         - globals.set:
             id: sleeptime
-            value: !lambda return int(x);
+            value: !lambda |
+              return (x == "singleshort")
+                ? id(singleshortdelay)
+                : (x == "doubleshort")
+                  ? id(doubleshortdelay)
+                  : atoi(x.c_str());
         - script.execute: delay_script
+
+sensor:
+  - platform: sun
+    id: sun_elevation
+    type: elevation
   - platform: mqtt_subscribe
-    name: set_singleshortdelay
+    id: set_singleshortdelay
     topic: "${device_name}/singleshortdelay/set"
     on_value:
       - then:
@@ -69,7 +76,7 @@ sensor:
             id: singleshortdelay
             value: !lambda return int(x);
   - platform: mqtt_subscribe
-    name: set_doubleshortdelay
+    id: set_doubleshortdelay
     topic: "${device_name}/doubleshortdelay/set"
     on_value:
       - then:
