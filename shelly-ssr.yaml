@@ -1,4 +1,4 @@
-#Features: 
+# Features:
 #  singleclick: x Sekunden an, dann aus (via Hardwareschalter als auch MQTT)
 #  doublelick: y Sekunden an, dann aus (via Hardwareschalter als auch MQTT)
 #  on_for: Licht kann via MQTT für in payload spezifizierte Anzahl an Sekunden angeschaltet werden (paylad darf auch "singleclick" oder "doublelick sein)
@@ -86,8 +86,7 @@ sensor:
     id: get_on_for
     name: on_for
     accuracy_decimals: 0
-    update_interval: never
-    # lambda: !lambda return id(on_for);
+    update_interval: never # published explicitly in script during countdown
   - platform: mqtt_subscribe
     id: set_singleshortdelay
     topic: "${device_name}/singleshortdelay/set"
