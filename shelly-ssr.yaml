@@ -1,3 +1,14 @@
+#Features: 
+#  singleclick: x Sekunden an, dann aus (via Hardwareschalter als auch MQTT)
+#  doublelick: y Sekunden an, dann aus (via Hardwareschalter als auch MQTT)
+#  on_for: Licht kann via MQTT für in payload spezifizierte Anzahl an Sekunden angeschaltet werden (paylad darf auch "singleclick" oder "doublelick sein)
+#  longpress: Toggle, also wenn Licht an dann aus oder wenn Licht aus dann an
+#  x und y können via mqtt gesetzt werden (werden auf dem Gerät persisitiert)
+#  Licht wird morgens kurz nach Sonnenaufgang automatisch immer ausgeschaltet
+#  Über alle Wege kann "nachgetastet" werden
+# on_for, d.h. Zeit bis zum ausschalten wird, falls countdown aktiv, sekündlich publiziert
+# Alle Shelly Funktionen wie Spannung-/Strommessung, Brownout-/Überlast/Hitze-Detection
+
 substitutions:
   device_name: "shelly-ssr"
   # Higher value gives lower watt readout
@@ -27,6 +38,10 @@ esp32:
       CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ: "160"
 
 globals:
+   - id: on_for
+     type: int
+     restore_value: no
+     initial_value: '0'
    - id: sleeptime
      type: int
      restore_value: no
@@ -49,8 +64,8 @@ sun:
 text_sensor:
   # Receive sleep time over MQTT
   - platform: mqtt_subscribe
-    name: on_for
-    topic: "${device_name}/on_for"
+    id: set_on_for
+    topic: "${device_name}/on_for/set"
     on_value:
       - then:
         - globals.set:
@@ -67,6 +82,12 @@ sensor:
   - platform: sun
     id: sun_elevation
     type: elevation
+  - platform: template
+    id: get_on_for
+    name: on_for
+    accuracy_decimals: 0
+    update_interval: never
+    # lambda: !lambda return id(on_for);
   - platform: mqtt_subscribe
     id: set_singleshortdelay
     topic: "${device_name}/singleshortdelay/set"
@@ -221,5 +242,19 @@ script:
     mode: restart
     then:
     - switch.turn_on: relay_1
-    - delay: !lambda return long(id(sleeptime)) * 1000;
+    - globals.set:
+        id: on_for
+        value: !lambda return id(sleeptime);
+    - while:
+        condition:
+          lambda: 'return id(on_for) > 0;'
+        then:
+        - delay: 1s
+        - globals.set:
+            id: on_for
+            value: !lambda return id(on_for) - 1;
+        - sensor.template.publish:
+            id: get_on_for
+            state: !lambda return id(on_for);
     - switch.turn_off: relay_1
+  
