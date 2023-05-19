@@ -9,7 +9,8 @@
 # on_for, d.h. Zeit bis zum ausschalten wird, falls countdown aktiv, sekündlich publiziert
 # Alle Shelly Funktionen wie Spannung-/Strommessung, Brownout-/Überlast/Hitze-Detection
 # Feature-Ideen
-#  Sperrzeiten, z.B. zwischen Sonnenaufgang+15 bis Sonnenuntergang-15, aber dann mit Möglichkeit des overrulens, dies sollte aber entweder auch nur für x Minuten gelten oder täglich wieder zurückgenomm wernde
+#  Sperrzeiten, z.B. zwischen Sonnenaufgang+15 bis Sonnenuntergang-15, aber dann mit Möglichkeit des overrulens, dies sollte aber entweder auch nur für x Minuten gelten oder täglich wieder zurückgenomm werden. Oder man sperrt z.B. alles ausser dem longpress, dann wäre longpress immer möglich. 
+#  Altert wenn sensor/power/state nicht 0 und ausserhalb von 450W +/- 10% -> Birne defekt
 
 substitutions:
   device_name: "shelly-ssr"
@@ -40,7 +41,7 @@ esp32:
       CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ: "160"
 
 globals:
-   - id: on_for
+   - id: on_for_timer
      type: int
      restore_value: no
      initial_value: '0'
@@ -245,18 +246,18 @@ script:
     then:
     - switch.turn_on: relay_1
     - globals.set:
-        id: on_for
+        id: on_for_timer
         value: !lambda return id(sleeptime);
     - while:
         condition:
-          lambda: 'return id(on_for) > 0;'
+          lambda: 'return id(on_for_timer) > 0;'
         then:
         - delay: 1s
         - globals.set:
-            id: on_for
-            value: !lambda return id(on_for) - 1;
+            id: on_for_timer
+            value: !lambda return id(on_for_timer) - 1;
         - sensor.template.publish:
             id: get_on_for
-            state: !lambda return id(on_for);
+            state: !lambda return id(on_for_timer);
     - switch.turn_off: relay_1
   
