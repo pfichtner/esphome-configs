@@ -1,0 +1,40 @@
+esphome:
+  name: wifimonitor
+  platform: ESP8266
+  board: d1_mini
+  # board: esp01
+
+<<: !include common/substitutions.yaml
+packages: 
+  wifi: !include common/wifi.yaml
+  mqtt: !include common/mqtt.yaml
+  management: !include common/management.yaml
+
+i2c:
+
+font:
+- file: 'fonts/Arial.ttf'
+  id: arial12
+  size: 12
+
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal Sensor"
+    update_interval: 1s
+    id: wifi_signal_db
+  - platform: copy
+    source_id: wifi_signal_db
+    id: wifi_signal_percent
+    filters:
+      - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
+    unit_of_measurement: "Signal %"
+
+display:
+  - platform: ssd1306_i2c
+    model: "SSD1306 64x48"
+    address: 0x3C
+    id: oled_display
+    lambda: |-
+      it.printf(0,  0, id(arial12), TextAlign::TOP_LEFT, "WiFi");
+      it.printf(0, 12, id(arial12), TextAlign::TOP_LEFT, "%.0f db", id(wifi_signal_db).state);
+      it.printf(0, 24, id(arial12), TextAlign::TOP_LEFT, "%.0f %%", id(wifi_signal_percent).state);
