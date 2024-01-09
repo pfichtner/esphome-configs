@@ -10,7 +10,7 @@
 # Alle Shelly Funktionen wie Spannung-/Strommessung, Brownout-/Überlast/Hitze-Detection
 # Feature-Ideen
 #  Sperrzeiten, z.B. zwischen Sonnenaufgang+15 bis Sonnenuntergang-15, aber dann mit Möglichkeit des overrulens, dies sollte aber entweder auch nur für x Minuten gelten oder täglich wieder zurückgenomm werden. Oder man sperrt z.B. alles ausser dem longpress, dann wäre longpress immer möglich. 
-#  Altert wenn sensor/power/state nicht 0 und ausserhalb von 450W +/- 10% -> Birne defekt
+#  Alert wenn sensor/power/state nicht 0 und ausserhalb von 450W +/- 10% -> Birne defekt
 
 substitutions:
   device_name: "shelly-ssr"
