@@ -5,7 +5,7 @@
 #  longpress: Toggle, also wenn Licht an dann aus oder wenn Licht aus dann an
 #  x und y können via mqtt gesetzt werden (werden auf dem Gerät persisitiert)
 #  Licht wird morgens kurz nach Sonnenaufgang automatisch immer ausgeschaltet
-#  Über alle Wege kann "nachgetastet" werden -> Konkret: Timer wird auf den neuen Wert gesetzt, z.B. singleclick: Timer startet wieder bei x, d.h. es wird NICHT aufsummiert (neue Zeit = Restzeit + x) sondern neue Zeit = x, das bedeutet entsprechend auch, dass, falls die Restzeit >x ist man damit die Restzeit auf x redizieren kann, Beispiel: doublelick=5m, singlecklick=2m, doubleklick ausgelöst, Restzeit noch 4 Minuten, dann singleclick -> Restzeit dann 2m (und eben nicht 4m+2m=6m), it's not a bug it's feature. Damit kann z.B. auch ein dauerhaft angeschaltetes Licht mit dem Taster auf eine Rest-An-Zeit von 2m gsetzt werden. 
+#  Über alle Wege kann "nachgetastet" werden -> Konkret: Timer wird auf den neuen Wert gesetzt, z.B. singleclick: Timer startet wieder bei x, d.h. es wird NICHT aufsummiert (neue Zeit = Restzeit + x) sondern neue Zeit = x, das bedeutet entsprechend auch, dass, falls die Restzeit >x ist man damit die Restzeit auf x reduzieren kann, Beispiel: doublelick=5m, singlecklick=2m, doubleklick ausgelöst, Restzeit noch 4 Minuten, dann singleclick -> Restzeit dann 2m (und eben nicht 4m+2m=6m), it's not a bug it's feature. Damit kann z.B. auch ein dauerhaft angeschaltetes Licht mit dem Taster auf eine Rest-An-Zeit von 2m gsetzt werden. 
 # on_for, d.h. Zeit bis zum ausschalten wird, falls countdown aktiv, sekündlich publiziert
 # Alle Shelly Funktionen wie Spannung-/Strommessung, Brownout-/Überlast/Hitze-Detection
 # Feature-Ideen
