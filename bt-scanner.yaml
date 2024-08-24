@@ -1,0 +1,42 @@
+esphome:
+#  name: ${device_name}
+  name: btscanner
+  includes:
+    - bt-scanner.h
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+<<: !include common/substitutions.yaml
+packages: 
+  wifi: !include common/wifi.yaml
+  mqtt: !include common/mqtt.yaml
+  management: !include common/management.yaml
+
+# Enable logging
+logger:
+
+esp32_ble_tracker:
+  on_ble_advertise:
+    - then:
+        - lambda: |-
+            MyBLETracker::process_ble_advertise(x.address_str());
+
+text_sensor:
+  - platform: template
+    id: new_device_status
+    name: "New Device Status"
+    on_value:
+      - mqtt.publish:
+          topic: "esp32/devices/new"
+          payload: !lambda 'return id(new_device_status).state.c_str();'
+
+  - platform: template
+    id: stale_device_status
+    name: "Stale Device Status"
+    on_value:
+      - mqtt.publish:
+          topic: "esp32/devices/staled"
+          payload: !lambda 'return id(stale_device_status).state.c_str();'
