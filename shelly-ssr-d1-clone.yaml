@@ -1,0 +1,112 @@
+substitutions:
+  device_name: "shelly-ssr-clone"
+
+esphome:
+  name: ${device_name}
+  platform: ESP8266
+  board: d1_mini
+
+<<: !include common/substitutions.yaml
+packages: 
+  wifi: !include common/wifi.yaml
+  mqtt: !include common/mqtt.yaml
+  management: !include common/management.yaml
+  sun: !include common/sun.yaml
+
+logger: 
+  level: debug
+
+globals:
+   - id: on_for
+     type: int
+     restore_value: no
+     initial_value: '0'
+   - id: sleeptime
+     type: int
+     restore_value: no
+     initial_value: '0'
+   - id: singleshortdelay
+     type: int
+     restore_value: yes
+     initial_value: '120'
+   - id: doubleshortdelay
+     type: int
+     restore_value: yes
+     initial_value: '300'
+
+text_sensor:
+  # Receive sleep time over MQTT
+  - platform: mqtt_subscribe
+    id: set_on_for
+    topic: "${device_name}/on_for/set"
+    on_value:
+      - then:
+        - logger.log: "Logger Info Start"
+        - lambda: |-
+              if (x == "singlelong") {
+                id(delay_script).stop();
+                id(relay_1).toggle();
+                return;
+              }
+              auto val = (x == "singleshort")
+                ? id(singleshortdelay)
+                : (x == "doubleshort")
+                  ? id(doubleshortdelay)
+                  : esphome::parse_number<int>(x.c_str()).value_or(-1);
+              if (val >= 0) {
+                id(sleeptime) = val;
+                id(delay_script).execute();
+              }
+        - logger.log: "Logger Info End"
+
+sensor:
+  - platform: sun
+    id: sun_elevation
+    type: elevation
+  - platform: template
+    id: get_on_for
+    name: on_for
+    accuracy_decimals: 0
+    update_interval: never # published explicitly in script during countdown
+  - platform: mqtt_subscribe
+    id: set_singleshortdelay
+    topic: "${device_name}/singleshortdelay/set"
+    on_value:
+      - then:
+        - globals.set:
+            id: singleshortdelay
+            value: !lambda return int(x);
+  - platform: mqtt_subscribe
+    id: set_doubleshortdelay
+    topic: "${device_name}/doubleshortdelay/set"
+    on_value:
+      - then:
+        - globals.set:
+            id: doubleshortdelay
+            value: !lambda return int(x);
+
+switch:
+# connected to hardware and not exposed
+  - platform: gpio
+    id: relay_1
+    pin: GPIO15
+
+script:
+  - id: delay_script
+    mode: restart
+    then:
+    - globals.set:
+        id: on_for
+        value: !lambda return id(sleeptime);
+    - while:
+        condition:
+          lambda: 'return id(on_for) > 0;'
+        then:
+        - delay: 1s
+        - globals.set:
+            id: on_for
+            value: !lambda return id(on_for) - 1;
+        - sensor.template.publish:
+            id: get_on_for
+            state: !lambda return id(on_for);
+  
