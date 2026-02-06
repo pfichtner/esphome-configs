@@ -1,5 +1,8 @@
+substitutions:
+  device_name: "pushbutton1"
+
 esphome:
-  name: pushbutton1
+  name: ${device_name}
 
 esp8266:
   board: d1_mini
@@ -28,35 +31,32 @@ binary_sensor:
       number: D2
       mode: INPUT_PULLUP
       inverted: True
-    name: "Push Button"
     id: push_button
+    name: "Push Button"
 
     on_multi_click:
-
-      # --- Single click ---
       - timing:
-          - ON for 50ms to 400ms
-          - OFF for at least 300ms
+          - ON for at most 1.5s
+          - OFF for at least 0.25s
         then:
           - mqtt.publish:
-              topic: "${esphome.name}/single_click"
+              topic: "${device_name}/single_click"
               payload: "ON"
 
-      # --- Double click ---
       - timing:
-          - ON for 50ms to 400ms
-          - OFF for 50ms to 300ms
-          - ON for 50ms to 400ms
-          - OFF for at least 300ms
+          - ON for at most 1s
+          - OFF for at most 0.25s
+          - ON for at most 1s
+          - OFF for at least 0.25s
         then:
           - mqtt.publish:
-              topic: "${esphome.name}/double_click"
+              topic: "${device_name}/double_click"
               payload: "ON"
 
-      # --- Long press ---
       - timing:
-          - ON for at least 1s
+          - ON for at least 1.5s
         then:
           - mqtt.publish:
-              topic: "${esphome.name}/long_press"
+              topic: "${device_name}/long_press"
               payload: "ON"
+
