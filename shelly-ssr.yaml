@@ -1,9 +1,9 @@
 # Features:
-#  singleclick: x Sekunden an, dann aus (via Hardwareschalter als auch MQTT)
-#  doublelick: y Sekunden an, dann aus (via Hardwareschalter als auch MQTT)
-#  on_for: Licht kann via MQTT für in payload spezifizierte Anzahl an Sekunden angeschaltet werden (paylad darf auch "singleclick" oder "doublelick sein)
-#  longpress: Toggle, also wenn Licht an dann aus oder wenn Licht aus dann an
-#  x und y können via mqtt gesetzt werden (werden auf dem Gerät persisitiert)
+#  singleshort: x Sekunden an, dann aus (via Hardwareschalter als auch MQTT)
+#  doubleshort: y Sekunden an, dann aus (via Hardwareschalter als auch MQTT)
+#  singlelong: Toggle, also wenn Licht an dann aus oder wenn Licht aus dann an (via Hardwareschalter als auch MQTT)
+#  on_for: Licht kann via MQTT für in payload spezifizierte Anzahl an Sekunden angeschaltet werden (paylad darf auch "singleshort", "doubleshort" oder "singlelong" sein)
+#  x und y können via mqtt gesetzt werden (werden auf dem Gerät persistiert)
 #  Licht wird morgens kurz nach Sonnenaufgang automatisch immer ausgeschaltet
 #  Über alle Wege kann "nachgetastet" werden -> Konkret: Timer wird auf den neuen Wert gesetzt, z.B. singleclick: Timer startet wieder bei x, d.h. es wird NICHT aufsummiert (neue Zeit = Restzeit + x) sondern neue Zeit = x, das bedeutet entsprechend auch, dass, falls die Restzeit >x ist man damit die Restzeit auf x reduzieren kann, Beispiel: doublelick=5m, singlecklick=2m, doubleklick ausgelöst, Restzeit noch 4 Minuten, dann singleclick -> Restzeit dann 2m (und eben nicht 4m+2m=6m), it's not a bug it's feature. Damit kann z.B. auch ein dauerhaft angeschaltetes Licht mit dem Taster auf eine Rest-An-Zeit von 2m gsetzt werden. 
 # on_for, d.h. Zeit bis zum ausschalten wird, falls countdown aktiv, sekündlich publiziert
@@ -72,6 +72,11 @@ text_sensor:
     on_value:
       - then:
         - lambda: |-
+              if (x == "singlelong") {
+                id(delay_script).stop();
+                id(relay_1).toggle();
+                return;
+              }
               auto val = (x == "singleshort")
                 ? id(singleshortdelay)
                 : (x == "doubleshort")
@@ -198,7 +203,7 @@ binary_sensor:
         - ON for at most 1.5s
         - OFF for at least 0.25s
       then:
-        - logger.log: "Single Short Clicked"
+#       - logger.log: "Single Short Clicked"
         - globals.set:
             id: sleeptime
             value: !lambda return id(singleshortdelay);
@@ -209,7 +214,7 @@ binary_sensor:
         - ON for at most 1s
         - OFF for at least 0.25s
       then:
-        - logger.log: "Double Short Clicked"
+#       - logger.log: "Double Short Clicked"
         - globals.set:
             id: sleeptime
             value: !lambda return id(doubleshortdelay);
@@ -217,7 +222,7 @@ binary_sensor:
     - timing:
         - ON for at least 1.5s
       then:
-        - logger.log: "Single Long Clicked"
+#       - logger.log: "Single Long Clicked"
         - script.stop: delay_script
         - switch.toggle: relay_1
 
