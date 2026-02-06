@@ -1,0 +1,62 @@
+esphome:
+  name: pushbutton1
+
+esp8266:
+  board: d1_mini
+
+<<: !include common/substitutions.yaml
+packages: 
+  wifi: !include common/wifi.yaml
+  mqtt: !include common/mqtt.yaml
+  management: !include common/management.yaml
+
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal Sensor"
+    update_interval: 1min
+    id: wifi_signal_db
+  - platform: copy
+    source_id: wifi_signal_db
+    id: wifi_signal_percent
+    filters:
+      - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
+    unit_of_measurement: "Signal %"
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: D2
+      mode: INPUT_PULLUP
+      inverted: True
+    name: "Push Button"
+    id: push_button
+
+    on_multi_click:
+
+      # --- Single click ---
+      - timing:
+          - ON for 50ms to 400ms
+          - OFF for at least 300ms
+        then:
+          - mqtt.publish:
+              topic: "${esphome.name}/single_click"
+              payload: "ON"
+
+      # --- Double click ---
+      - timing:
+          - ON for 50ms to 400ms
+          - OFF for 50ms to 300ms
+          - ON for 50ms to 400ms
+          - OFF for at least 300ms
+        then:
+          - mqtt.publish:
+              topic: "${esphome.name}/double_click"
+              payload: "ON"
+
+      # --- Long press ---
+      - timing:
+          - ON for at least 1s
+        then:
+          - mqtt.publish:
+              topic: "${esphome.name}/long_press"
+              payload: "ON"
