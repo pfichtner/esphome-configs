@@ -14,8 +14,6 @@ packages:
   management: !include common/management.yaml
 
 i2c:
-  sda: D2
-  scl: D1
 
 font:
   - file: "fonts/Arial.ttf"
@@ -192,7 +190,6 @@ script:
 
 
 binary_sensor:
-
   - platform: gpio
     pin: D5
     name: D5
@@ -216,8 +213,8 @@ binary_sensor:
             }
 
   - platform: gpio
-    pin: D6
-    name: D6
+    pin: D3
+    name: button_up
     on_press:
       then:
         - lambda: |-
@@ -238,8 +235,8 @@ binary_sensor:
             }
 
   - platform: gpio
-    pin: D7
-    name: D7
+    pin: D4
+    name: button_down
     on_press:
       then:
         - lambda: |-
