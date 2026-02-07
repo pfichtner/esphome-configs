@@ -45,9 +45,9 @@ binary_sensor:
 
       - timing:
           - ON for at most 1s
-          - OFF for at most 0.25s
+          - OFF for at most 0.50s
           - ON for at most 1s
-          - OFF for at least 0.25s
+          - OFF for at least 0.50s
         then:
           - mqtt.publish:
               topic: "${device_name}/double_click"
