@@ -8,7 +8,7 @@ esp8266:
   board: d1_mini
 
 <<: !include common/substitutions.yaml
-packages: 
+packages:
   wifi: !include common/wifi.yaml
   mqtt: !include common/mqtt.yaml
   management: !include common/management.yaml
@@ -25,39 +25,7 @@ globals:
     type: std::string
     initial_value: '"http://scanservjs"'
 
-  - id: ui_state        # 0 menu,1 edit,2 scanning,3 multi,4 done
-    type: int
-    initial_value: '0'
-
-  - id: cursor
-    type: int
-    initial_value: '0'
-
-  - id: menu_last_index
-    type: int
-    initial_value: '4'
-
-  - id: blink
-    type: bool
-    initial_value: 'false'
-
-  - id: dpi
-    type: int
-    initial_value: '300'
-
-  - id: color_mode      # 0 lineart,1 gray,2 color
-    type: int
-    initial_value: '2'
-
-  - id: source          # 0 flatbed,1 adf
-    type: int
-    initial_value: '0'
-
-  - id: flatbed_mode    # 0 single,1 multi
-    type: int
-    initial_value: '0'
-
-  - id: adf_mode        # 0 simplex,1 duplex
+  - id: ui_state        # 0: menu, 1: edit, 2: scanning, 3: flatbed multi, 4: done
     type: int
     initial_value: '0'
 
@@ -73,20 +41,31 @@ globals:
     type: bool
     initial_value: 'false'
 
-interval:
-  - interval: 400ms
-    then:
-      - lambda: |-
-          if (id(ui_state) == 1)
-            id(blink) = !id(blink);
-          else
-            id(blink) = false;
+  - id: dpi
+    type: int
+    initial_value: '300'
+
+  - id: color_mode      # 0: Lineart, 1: Gray, 2: Color
+    type: int
+    initial_value: '1'
+
+  - id: source          # 0: Flatbed, 1: ADF
+    type: int
+    initial_value: '0'
+
+  - id: flatbed_mode    # 0: Single, 1: Multi
+    type: int
+    initial_value: '0'
+
+  - id: adf_mode        # 0: Simplex, 1: Duplex
+    type: int
+    initial_value: '0'
 
 http_request:
   id: http_client
   useragent: ${device_name}
   verify_ssl: False
-  timeout: 15s
+  timeout: 2min
 
 display:
   - platform: ssd1306_i2c
@@ -95,47 +74,43 @@ display:
     address: 0x3C
     pages:
 
-      # ---- MAIN MENU ----
-      - id: main_menu
+      # ---- DPI PAGE ----
+      - id: page_dpi
         lambda: |-
-          const char* colors[] = {"L","G","C"};
-          const char* sources[] = {"F","A"};
-          const char* flatbed[] = {"S","M"};
-          const char* adf[] = {"S","D"};
+          it.print(0,0,id(arial12),"DPI:");
+          it.printf(0,12,id(arial12),"%d", id(dpi));
 
-          int y=0;
-          int row_index=0;
+      # ---- COLOR MODE PAGE ----
+      - id: page_color
+        lambda: |-
+          const char* colors[] = {"Lineart","Gray","Color"};
+          it.print(0,0,id(arial12),"Color mode:");
+          it.printf(0,12,id(arial12),"%s", colors[id(color_mode)]);
 
-          auto draw_row = [&](int idx, const char* label, std::string value){
-            bool selected = (id(cursor) == idx);
-            bool editing = (id(ui_state) == 1 && selected);
+      # ---- SOURCE PAGE ----
+      - id: page_source
+        lambda: |-
+          const char* sources[] = {"Flatbed","ADF"};
+          it.print(0,0,id(arial12),"Source:");
+          it.printf(0,12,id(arial12),"%s", sources[id(source)]);
 
-            if(selected){
-              if(editing && id(blink))
-                it.printf(0,y,id(arial12),"  %s:  ",label);
-              else
-                it.printf(0,y,id(arial12),"> %s:%s",label,value.c_str());
-            } else {
-              it.printf(0,y,id(arial12),"  %s:%s",label,value.c_str());
-            }
-            y+=12;
-          };
+      # ---- FLATBED/ADF PAGE ----
+      - id: page_mode
+        lambda: |-
+          if(id(source)==0){
+            const char* flatbed[] = {"Single","Multi"};
+            it.print(0,0,id(arial12),"Flatbed mode:");
+            it.printf(0,12,id(arial12),"%s", flatbed[id(flatbed_mode)]);
+          } else {
+            const char* adf[] = {"Simplex","Duplex"};
+            it.print(0,0,id(arial12),"ADF mode:");
+            it.printf(0,12,id(arial12),"%s", adf[id(adf_mode)]);
+          }
 
-          draw_row(row_index++,"DPI", to_string(id(dpi)));
-          draw_row(row_index++,"Col", colors[id(color_mode)]);
-          draw_row(row_index++,"Src", sources[id(source)]);
-
-          if(id(source)==0)
-            draw_row(row_index++,"Flt", flatbed[id(flatbed_mode)]);
-          else
-            draw_row(row_index++,"ADF", adf[id(adf_mode)]);
-
-          if(id(cursor) == row_index)
-            it.print(0,y,id(arial12),"> START");
-          else
-            it.print(0,y,id(arial12),"  START");
-
-          id(menu_last_index) = row_index;
+      # ---- START SCAN PAGE ----
+      - id: page_start
+        lambda: |-
+          it.print(0,0,id(arial12),"START SCAN");
 
       # ---- SCANNING PAGE ----
       - id: scanning_page
@@ -148,10 +123,7 @@ display:
           const char* actions[] = {"SAME","NEXT","FIN"};
           int y=0;
           for(int i=0;i<3;i++){
-            if(id(cursor)==i)
-              it.printf(0,y,id(arial12),"> %s",actions[i]);
-            else
-              it.printf(0,y,id(arial12),"  %s",actions[i]);
+            it.printf(0,y,id(arial12),"%s", actions[i]);
             y+=12;
           }
 
@@ -160,32 +132,8 @@ display:
         lambda: |-
           it.print(0,24,id(arial12),"Scan done");
 
-# ---- SCRIPT TO SIMULATE SELECT BUTTON ----
-script:
-  - id: button_select_sim
-    then:
-      - lambda: |-
-          if(id(select_locked)) return;
-          id(select_locked)=true;
-
-          if(id(ui_state)==0){
-            if(id(cursor)==id(menu_last_index))
-              id(start_scan).execute();
-            else
-              id(ui_state)=1;
-          } else if(id(ui_state)==1){
-            id(ui_state)=0;
-          } else if(id(ui_state)==3){
-            if(id(cursor)==0){ id(start_scan).execute(); } // SAME
-            else if(id(cursor)==1){ id(start_scan).execute(); } // NEXT
-            else { id(ui_state)=4; id(oled).show_page(id(scan_done)); }
-            id(cursor)=0;
-          } else if(id(ui_state)==4){
-            id(ui_state)=0;
-            id(oled).show_page(id(main_menu));
-          }
-
 # ---- SCRIPT TO START SCAN ----
+script:
   - id: start_scan
     then:
       - lambda: |-
@@ -218,7 +166,6 @@ script:
               - lambda: |-
                   if(id(source)==0 && id(flatbed_mode)==1){
                     id(ui_state)=3;
-                    id(cursor)=0;  // start on first action
                     id(oled).show_page(id(flatbed_multi));
                   } else {
                     id(ui_state)=4;
@@ -230,73 +177,61 @@ script:
               - lambda: |-
                   ESP_LOGE("scan","Scan failed");
 
+# ---- SELECT BUTTON SCRIPT ----
+  - id: button_select_sim
+    then:
+      - lambda: |-
+          if(id(select_locked)) return;
+          id(select_locked)=true;
+
+          if(id(ui_state)==0 || id(ui_state)==1){
+            // Press select to edit or start scan
+            id(ui_state)=1;
+          } else if(id(ui_state)==3){ // flatbed multi
+            id(start_scan).execute();
+          } else if(id(ui_state)==4){
+            id(ui_state)=0;
+            id(oled).show_page(id(page_dpi));
+          }
+
 # ---- BUTTONS ----
 binary_sensor:
   - platform: gpio
-    pin: D5
-    name: button_up
+    pin: D3  # UP button
+    name: "Button Up"
     on_press:
-      then:
-        - lambda: |-
-            id(button_up_state)=true;
-            if(id(button_down_state) && !id(select_locked)){
-              id(button_select_sim).execute();
-            } else {
-              if(id(ui_state)==0) id(cursor)=(id(cursor)+id(menu_last_index))%(id(menu_last_index)+1);
-              else if(id(ui_state)==1){
-                switch(id(cursor)){
-                  case 0: id(dpi)+=25; break;
-                  case 1: id(color_mode)=(id(color_mode)+1)%3; break;
-                  case 2: id(source)=(id(source)+1)%2; break;
-                  case 3:
-                    if(id(source)==0) id(flatbed_mode)=(id(flatbed_mode)+1)%2;
-                    else id(adf_mode)=(id(adf_mode)+1)%2;
-                    break;
-                }
-              } else if(id(ui_state)==3){
-                id(cursor)=(id(cursor)+2)%3;
-              }
-            }
+      # If both buttons pressed → simulate SELECT
+      - lambda: |-
+          if (id(button_down_state) && !id(select_locked)) {
+            id(button_select_sim).execute();
+          }
+      # Otherwise → go to previous page
+      - display.page.show_previous: oled
+      - component.update: oled
     on_release:
-      then:
-        - lambda: |-
-            id(button_up_state)=false;
-            id(select_locked)=false;
+      - lambda: |-
+          id(button_up_state) = false;
+          id(select_locked) = false;
 
   - platform: gpio
-    pin: D3
-    name: button_down
+    pin: D4  # DOWN button
+    name: "Button Down"
     on_press:
-      then:
-        - lambda: |-
-            id(button_down_state)=true;
-            if(id(button_up_state) && !id(select_locked)){
-              id(button_select_sim).execute();
-            } else {
-              if(id(ui_state)==0) id(cursor)=(id(cursor)+1)%(id(menu_last_index)+1);
-              else if(id(ui_state)==1){
-                switch(id(cursor)){
-                  case 0: id(dpi)-=25; break;
-                  case 1: id(color_mode)=(id(color_mode)+2)%3; break;
-                  case 2: id(source)=(id(source)+1)%2; break;
-                  case 3:
-                    if(id(source)==0) id(flatbed_mode)=(id(flatbed_mode)+1)%2;
-                    else id(adf_mode)=(id(adf_mode)+1)%2;
-                    break;
-                }
-              } else if(id(ui_state)==3){
-                id(cursor)=(id(cursor)+1)%3;
-              }
-            }
+      # If both buttons pressed → simulate SELECT
+      - lambda: |-
+          if (id(button_up_state) && !id(select_locked)) {
+            id(button_select_sim).execute();
+          }
+      # Otherwise → go to next page
+      - display.page.show_next: oled
+      - component.update: oled
     on_release:
-      then:
-        - lambda: |-
-            id(button_down_state)=false;
-            id(select_locked)=false;
+      - lambda: |-
+          id(button_down_state) = false;
+          id(select_locked) = false;
 
   - platform: gpio
-    pin: D4
-    name: button_select
+    pin: D5  # SELECT button
+    name: "Button Select"
     on_press:
-      then:
-        - script.execute: button_select_sim
+      - script.execute: button_select_sim
