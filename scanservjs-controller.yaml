@@ -96,7 +96,7 @@ graphical_display_menu:
   display: oled
   font: arial12
   mode: rotary
-  active: true
+  active: false
 
   items:
     # DPI
@@ -182,18 +182,30 @@ graphical_display_menu:
 binary_sensor:
   - platform: gpio
     pin: D3
-    name: "Button Up"
     on_press:
-      - display_menu.up: scanner_menu
+      - if:
+          condition:
+            display_menu.is_active: scanner_menu
+          then:
+            - display_menu.up: scanner_menu
 
   - platform: gpio
     pin: D4
-    name: "Button Down"
     on_press:
-      - display_menu.down: scanner_menu
+      - if:
+          condition:
+            display_menu.is_active: scanner_menu
+          then:
+            - display_menu.down: scanner_menu
 
   - platform: gpio
     pin: D5
     name: "Button Select"
     on_press:
-      - display_menu.enter: scanner_menu
+      - if:
+          condition:
+            display_menu.is_active: scanner_menu
+          then:
+            - display_menu.enter: scanner_menu
+          else:
+            - display_menu.show: scanner_menu
