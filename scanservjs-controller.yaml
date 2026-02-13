@@ -48,12 +48,12 @@ select:
   - platform: template
     id: dpi_select
     optimistic: true
-    options: ["75","100","150","200","300","600","1200"]
+    options: ["600","1200","75","100","150","200","300"]
 
   - platform: template
     id: color_select
     optimistic: true
-    options: ["Lineart","Gray","Color"]
+    options: ["Gray","Color","Lineart"]
 
   - platform: template
     id: source_select
