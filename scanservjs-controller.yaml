@@ -26,26 +26,6 @@ globals:
     type: std::string
     initial_value: '"http://scanservjs"'
 
-  - id: dpi_str
-    type: std::string
-    initial_value: '"300"'
-
-  - id: color_mode_str
-    type: std::string
-    initial_value: '"Gray"'
-
-  - id: source_str
-    type: std::string
-    initial_value: '"Flatbed"'
-
-  - id: flatbed_mode_str
-    type: std::string
-    initial_value: '"Single"'
-
-  - id: adf_mode_str
-    type: std::string
-    initial_value: '"Simplex"'
-
   - id: status_str
     type: std::string
     initial_value: '""'
@@ -96,52 +76,32 @@ graphical_display_menu:
   display: oled
   font: arial12
   mode: rotary
-  active: false
 
   items:
     # DPI
     - type: select
       text: "DPI"
       select: dpi_select
-      on_value:
-        then:
-          - lambda: 'id(dpi_str) = it->get_value_text();'
 
     # Color
     - type: select
-      text: "Color"
+      text: "Col"
       select: color_select
-      on_value:
-        then:
-          - lambda: 'id(color_mode_str) = it->get_value_text();'
 
     # Source
     - type: select
-      text: "Source"
+      text: "Src"
       select: source_select
-      on_value:
-        then:
-          - lambda: 'id(source_str) = it->get_value_text();'
 
     # Flatbed mode (only meaningful if Flatbed)
     - type: select
       text: "Mode"
       select: flatbed_mode_select
-      on_value:
-        then:
-          - lambda: |-
-              if (id(source_str) == "Flatbed")
-                id(flatbed_mode_str) = it->get_value_text();
 
     # ADF mode (only meaningful if ADF)
     - type: select
-      text: "ADF Mode"
+      text: "ADF"
       select: adf_mode_select
-      on_value:
-        then:
-          - lambda: |-
-              if (id(source_str) == "ADF")
-                id(adf_mode_str) = it->get_value_text();
 
     # Start scan command
     - type: command
@@ -149,24 +109,27 @@ graphical_display_menu:
       on_value:
         then:
           - lambda: 'id(status_str) = "Scanning...";'
-
           - http_request.post:
               url: !lambda 'return id(scan_server) + "/api/v1/scan";'
               request_headers:
                 Content-Type: application/json
               body: !lambda |-
-                std::string json =
-                  std::string("{\"params\":{") +
-                  "\"resolution\":" + id(dpi_str) + "," +
-                  "\"mode\":\"" + id(color_mode_str) + "\"," +
-                  "\"source\":\"" + id(source_str) + "\"," +
-                  "\"adfMode\":\"" +
-                    (id(source_str) == "Flatbed"
-                      ? id(flatbed_mode_str)
-                      : id(adf_mode_str)) +
-                  "\"},\"pipeline\":\"JPG | @:pipeline.high-quality\"}";
-                return json;
+                std::string dpi = id(dpi_select).current_option();
+                std::string color = id(color_select).current_option();
+                std::string source = id(source_select).current_option();
 
+                std::string mode =
+                  (source == "Flatbed")
+                    ? id(flatbed_mode_select).current_option()
+                    : id(adf_mode_select).current_option();
+
+                return
+                  "{\"params\":{"
+                    "\"resolution\":" + dpi + ","
+                    "\"mode\":\"" + color + "\","
+                    "\"source\":\"" + source + "\","
+                    "\"adfMode\":\"" + mode + "\""
+                  "},\"pipeline\":\"JPG | @:pipeline.high-quality\"}";
               on_response:
                 then:
                   - lambda: 'id(status_str) = "Scan done";'
@@ -181,31 +144,28 @@ graphical_display_menu:
 # ---------------- BUTTONS ----------------
 binary_sensor:
   - platform: gpio
-    pin: D3
+    pin:
+      number: D3
+      mode: INPUT_PULLUP
+      inverted: True
+    name: "Button Up"
     on_press:
-      - if:
-          condition:
-            display_menu.is_active: scanner_menu
-          then:
-            - display_menu.up: scanner_menu
+      - display_menu.up: scanner_menu
 
   - platform: gpio
-    pin: D4
+    pin:
+      number: D4
+      mode: INPUT_PULLUP
+      inverted: True
+    name: "Button Down"
     on_press:
-      - if:
-          condition:
-            display_menu.is_active: scanner_menu
-          then:
-            - display_menu.down: scanner_menu
+      - display_menu.down: scanner_menu
 
   - platform: gpio
-    pin: D5
+    pin:
+      number: D5
+      mode: INPUT_PULLUP
+      inverted: True
     name: "Button Select"
     on_press:
-      - if:
-          condition:
-            display_menu.is_active: scanner_menu
-          then:
-            - display_menu.enter: scanner_menu
-          else:
-            - display_menu.show: scanner_menu
+      - display_menu.enter: scanner_menu
