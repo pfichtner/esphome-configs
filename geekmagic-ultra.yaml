@@ -1,0 +1,100 @@
+esphome:
+  name: espminidisplay1
+
+<<: !include common/substitutions.yaml
+packages: 
+  wifi: !include common/wifi.yaml
+  mqtt: !include common/mqtt.yaml
+  management: !include common/management.yaml
+
+esp8266:
+  board: d1_mini
+
+ota:
+  - platform: esphome
+
+#enable logger
+logger:
+
+spi:
+  clk_pin: GPIO14
+  mosi_pin: GPIO13
+  id: spihwd
+
+output:
+  - platform: esp8266_pwm
+    pin: GPIO05
+    id: backlight_pwm
+    inverted: true
+
+light:
+  - platform: monochromatic
+    output: backlight_pwm
+    name: "Backlight"
+    restore_mode: RESTORE_AND_ON
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Berlin
+
+font:
+  - file:
+      type: gfonts
+      family: Roboto
+      weight: 500
+    id: font_time
+    size: 54
+    glyphs: "0123456789:"
+
+  - file:
+      type: gfonts
+      family: Roboto
+      weight: 400
+    id: font_date
+    size: 20
+    glyphs: "0123456789.- "
+
+display:
+  - platform: mipi_spi
+    model: st7789v
+    spi_id: spihwd
+    dc_pin: GPIO00
+    reset_pin: GPIO02
+    color_depth: 8
+    invert_colors: true
+    spi_mode: mode3
+    dimensions:
+      width: 240
+      height: 240
+    update_interval: 5s
+    lambda: |-
+      // Schwarzer Hintergrund
+      it.fill(Color(0, 0, 0));
+
+      auto now = id(sntp_time).now();
+      if (!now.is_valid()) {
+        // Noch keine Zeit → einfach leerer Screen
+        return;
+      }
+
+      // Uhrzeit HH:MM
+      char time_str[6];
+      snprintf(time_str, sizeof(time_str),
+               "%02d:%02d", now.hour, now.minute);
+
+      // Datum DD.MM.YYYY
+      char date_str[11];
+      snprintf(date_str, sizeof(date_str),
+               "%02d.%02d.%04d",
+               now.day_of_month, now.month, now.year);
+
+      // Uhrzeit → weiß
+      it.printf(120, 90, id(font_time),
+                Color(255, 255, 255),
+                TextAlign::CENTER, "%s", time_str);
+
+      // Datum → gelb
+      it.printf(120, 140, id(font_date),
+                Color(255, 255, 0),
+                TextAlign::CENTER, "%s", date_str);
