@@ -28,7 +28,7 @@ sensor:
 binary_sensor:
   - platform: gpio
     pin:
-      number: D2
+      number: D3
       mode: INPUT_PULLUP
       inverted: True
     id: push_button
