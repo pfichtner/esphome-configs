@@ -97,6 +97,7 @@ jobs:
       - name: Compile ESPHome firmware
         run: |
           docker run --rm \
+            --user $(id -u):$(id -g) \
             -v ${{ github.workspace }}:/config \
             -v ${{ github.workspace }}/.platformio:/cache \
             esphome/esphome:${{ steps.set_version.outputs.version }} \
