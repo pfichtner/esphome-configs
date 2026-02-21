@@ -17,18 +17,17 @@ i2c:
 
 font:
   - file: "fonts/Arial.ttf"
-    id: arial12
-    size: 12
+    id: arial_small
+    size: 10
+  - file: "fonts/Arial.ttf"
+    id: arial_big
+    size: 14
 
 # ---------------- GLOBAL STATE ----------------
 globals:
   - id: scan_server
     type: std::string
     initial_value: '"http://scanservjs"'
-
-  - id: status_str
-    type: std::string
-    initial_value: '""'
 
 http_request:
   id: http_client
@@ -72,74 +71,60 @@ select:
 
 # ---------------- MENU ----------------
 graphical_display_menu:
-  id: scanner_menu
-  display: oled
-  font: arial12
-  mode: rotary
+  - id: scanner_menu
+    display: oled
+    font: arial_small
+    mode: rotary
+    active: true
+    items:
+      # DPI
+      - type: select
+        text: "DPI"
+        select: dpi_select
 
-  items:
-    # DPI
-    - type: select
-      text: "DPI"
-      select: dpi_select
+      # Color
+      - type: select
+        text: "Col"
+        select: color_select
 
-    # Color
-    - type: select
-      text: "Col"
-      select: color_select
+      # Source
+      - type: select
+        text: "Src"
+        select: source_select
 
-    # Source
-    - type: select
-      text: "Src"
-      select: source_select
+      # Flatbed mode (only meaningful if Flatbed)
+      - type: select
+        text: "Mode"
+        select: flatbed_mode_select
+  #      visible: !lambda |-
+  #        return id(source_select).current_option() == "Flatbed"
 
-    # Flatbed mode (only meaningful if Flatbed)
-    - type: select
-      text: "Mode"
-      select: flatbed_mode_select
+      # ADF mode (only meaningful if ADF)
+      - type: select
+        text: "ADF"
+        select: adf_mode_select
+  #      visible: !lambda |-
+  #        return id(source_select).current_option() == "ADF"
 
-    # ADF mode (only meaningful if ADF)
-    - type: select
-      text: "ADF"
-      select: adf_mode_select
+      # Start scan command
+      - type: command
+        text: "Start Scan"
+        on_value:
+          then:
+            - display_menu.hide: scanner_menu
+            - display_menu.show: scanning_menu
+            - delay: 100ms
+            - script.execute: do_scan
 
-    # Start scan command
-    - type: command
-      text: "Start Scan"
-      on_value:
-        then:
-          - lambda: 'id(status_str) = "Scanning...";'
-          - http_request.post:
-              url: !lambda 'return id(scan_server) + "/api/v1/scan";'
-              request_headers:
-                Content-Type: application/json
-              body: !lambda |-
-                std::string dpi = id(dpi_select).current_option();
-                std::string color = id(color_select).current_option();
-                std::string source = id(source_select).current_option();
+  - id: scanning_menu
+    display: oled
+    font: arial_big
+    mode: rotary
+    active: false
 
-                std::string mode =
-                  (source == "Flatbed")
-                    ? id(flatbed_mode_select).current_option()
-                    : id(adf_mode_select).current_option();
-
-                return
-                  "{\"params\":{"
-                    "\"resolution\":" + dpi + ","
-                    "\"mode\":\"" + color + "\","
-                    "\"source\":\"" + source + "\","
-                    "\"adfMode\":\"" + mode + "\""
-                  "},\"pipeline\":\"JPG | @:pipeline.high-quality\"}";
-              on_response:
-                then:
-                  - lambda: 'id(status_str) = "Scan done";'
-
-              on_error:
-                then:
-                  - lambda: 'id(status_str) = "Scan failed";'
-
-    - type: label
-      text: !lambda 'return id(status_str);'
+    items:
+      - type: label
+        text: "Scanning..."
 
 # ---------------- BUTTONS ----------------
 binary_sensor:
@@ -169,3 +154,34 @@ binary_sensor:
     name: "Button Select"
     on_press:
       - display_menu.enter: scanner_menu
+
+script:
+  - id: do_scan
+    then:
+      - http_request.post:
+          url: !lambda 'return id(scan_server) + "/api/v1/scan";'
+          request_headers:
+            Content-Type: application/json
+          body: !lambda |-
+            std::string dpi = id(dpi_select).current_option();
+            std::string color = id(color_select).current_option();
+            std::string source = id(source_select).current_option();
+
+            std::string mode =
+              (source == "Flatbed")
+                ? id(flatbed_mode_select).current_option()
+                : id(adf_mode_select).current_option();
+
+            return
+              "{\"params\":{"
+                "\"resolution\":" + dpi + ","
+                "\"mode\":\"" + color + "\","
+                "\"source\":\"" + source + "\","
+                "\"adfMode\":\"" + mode + "\""
+              "},\"pipeline\":\"JPG | @:pipeline.high-quality\"}";
+          on_response:
+            then:
+              - display_menu.show: scanner_menu
+          on_error:
+            then:
+              - display_menu.show: scanner_menu
