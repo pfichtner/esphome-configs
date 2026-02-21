@@ -1,0 +1,80 @@
+name: ESPHome CI Compile
+
+on:
+#  push:
+#    branches: [ main ]
+#  pull_request:
+  workflow_dispatch:
+    inputs:
+      ESPHOME_VERSION:
+        description: 'ESPHome Docker image version'
+        required: false
+        default: 'latest'
+
+jobs:
+  list_yaml_files:
+    runs-on: ubuntu-latest
+    outputs:
+      yaml_files: ${{ steps.set_files.outputs.yaml_list }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: List YAML files
+        id: set_files
+        run: |
+          # Find all YAMLs in repo root (can replace with recursive find later)
+          files=$(ls *.yaml | jq -R -s -c 'split("\n")[:-1]')
+          echo "yaml_list=$files" >> $GITHUB_OUTPUT
+
+  compile:
+    needs: list_yaml_files
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        config: ${{fromJson(needs.list_yaml_files.outputs.yaml_files)}}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # --------------------------
+      # Determine ESPHome version
+      # --------------------------
+      - name: Set ESPHome version
+        id: set_version
+        run: |
+          # If triggered by push/PR, default to 'latest'; otherwise use workflow_dispatch input
+          if [ -z "${{ github.event.inputs.ESPHOME_VERSION }}" ]; then
+            echo "version=latest" >> $GITHUB_OUTPUT
+          else
+            echo "version=${{ github.event.inputs.ESPHOME_VERSION }}" >> $GITHUB_OUTPUT
+          fi
+
+      # --------------------------
+      # Docker image cache
+      # --------------------------
+      - name: Cache ESPHome Docker image
+        uses: ScribeMD/docker-cache@v0.5.0
+        with:
+          key: esphome-${{ matrix.config }}-${{ steps.set_version.outputs.version }}
+          images: esphome/esphome:${{ steps.set_version.outputs.version }}
+
+      - name: Pull ESPHome Docker image
+        run: docker pull esphome/esphome:${{ steps.set_version.outputs.version }}
+
+      # --------------------------
+      # Secrets setup
+      # --------------------------
+      - name: Create secrets.yaml from full secret
+        run: |
+          echo "${{ secrets.SECRETS_YAML }}" > secrets.yaml
+
+      # --------------------------
+      # Compile step
+      # --------------------------
+      - name: Compile ESPHome firmware
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/config \
+            esphome/esphome:${{ steps.set_version.outputs.version }} compile /config/${{ matrix.config }}
+
