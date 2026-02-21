@@ -1,9 +1,9 @@
 name: ESPHome CI Compile
 
 on:
-#  push:
-#    branches: [ main ]
-#  pull_request:
+  push:
+    branches: [ main ]
+  pull_request:
   workflow_dispatch:
     inputs:
       ESPHOME_VERSION:
