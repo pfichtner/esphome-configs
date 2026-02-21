@@ -26,7 +26,9 @@ jobs:
         id: set_files
         run: |
           # Find all YAMLs in repo root (can replace with recursive find later)
-          files=$(ls *.yaml | jq -R -s -c 'split("\n")[:-1]')
+          files=$(ls *.yaml 2>/dev/null \
+            | grep -v '^secrets-template\.yaml$' \
+            | jq -R -s -c 'split("\n")[:-1]')
           echo "yaml_list=$files" >> $GITHUB_OUTPUT
 
   compile:
