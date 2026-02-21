@@ -54,19 +54,30 @@ jobs:
           fi
 
       # --------------------------
-      # Docker image cache
+      # Cache PlatformIO packages
+      # --------------------------
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: .platformio
+          key: esphome-${{ runner.os }}-${{ steps.set_version.outputs.version }}
+          restore-keys: |
+            esphome-${{ runner.os }}-
+
+      # --------------------------
+      # Cache Docker image
       # --------------------------
       - name: Cache ESPHome Docker image
         uses: ScribeMD/docker-cache@0.5.0
         with:
-          key: esphome-${{ matrix.config }}-${{ steps.set_version.outputs.version }}
+          key: esphome-${{ steps.set_version.outputs.version }}
           images: esphome/esphome:${{ steps.set_version.outputs.version }}
 
       - name: Pull ESPHome Docker image
         run: docker pull esphome/esphome:${{ steps.set_version.outputs.version }}
 
       # --------------------------
-      # Secrets setup
+      # Prepare secrets.yaml
       # --------------------------
       - name: Prepare secrets.yaml
         run: |
@@ -79,11 +90,12 @@ jobs:
           fi
 
       # --------------------------
-      # Compile step
+      # Compile
       # --------------------------
       - name: Compile ESPHome firmware
         run: |
           docker run --rm \
             -v ${{ github.workspace }}:/config \
-            esphome/esphome:${{ steps.set_version.outputs.version }} compile /config/${{ matrix.config }}
-
+            -v ${{ github.workspace }}/.platformio:/cache \
+            esphome/esphome:${{ steps.set_version.outputs.version }} \
+            compile /config/${{ matrix.config }}
