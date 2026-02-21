@@ -54,7 +54,7 @@ jobs:
       # Docker image cache
       # --------------------------
       - name: Cache ESPHome Docker image
-        uses: ScribeMD/docker-cache@v0.5.0
+        uses: ScribeMD/docker-cache@0.5.0
         with:
           key: esphome-${{ matrix.config }}-${{ steps.set_version.outputs.version }}
           images: esphome/esphome:${{ steps.set_version.outputs.version }}
