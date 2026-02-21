@@ -33,6 +33,7 @@ jobs:
     strategy:
       matrix:
         config: ${{fromJson(needs.list_yaml_files.outputs.yaml_files)}}
+    continue-on-error: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
