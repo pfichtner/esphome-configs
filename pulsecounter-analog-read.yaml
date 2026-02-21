@@ -20,7 +20,7 @@ packages:
   management: !include common/management.yaml
 
 substitutions:
-  status_led: D4
+  status_led: GPIO2
   icon_sun_nok : "☼"
   icon_sun_ok : "❄"
   icon_elevation_ok : "✓"
@@ -138,7 +138,7 @@ binary_sensor:
           }
           lastUpdate = now;
   - platform: gpio
-    pin: D1
+    pin: D3
     id: abutton
     internal: true
     filters:
@@ -147,7 +147,7 @@ binary_sensor:
       - display.page.show_next: oled
       - component.update: oled
   - platform: gpio
-    pin: D2
+    pin: D4
     id: bbutton
     internal: true
     filters:
