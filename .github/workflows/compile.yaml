@@ -68,15 +68,15 @@ jobs:
       # --------------------------
       # Secrets setup
       # --------------------------
-      - name: Create secrets.yaml from secret
-        if: ${{ secrets.SECRETS_YAML != '' }}
+      - name: Prepare secrets.yaml
         run: |
-          echo "${{ secrets.SECRETS_YAML }}" > secrets.yaml
-
-      - name: Use secrets template
-        if: ${{ secrets.SECRETS_YAML == '' }}
-        run: |
-          cp secrets-template.yaml secrets.yaml
+          if [ -n "${{ secrets.SECRETS_YAML }}" ]; then
+            echo "${{ secrets.SECRETS_YAML }}" > secrets.yaml
+            echo "Using repository secret"
+          else
+            cp secrets-template.yaml secrets.yaml
+            echo "Using template file"
+          fi
 
       # --------------------------
       # Compile step
