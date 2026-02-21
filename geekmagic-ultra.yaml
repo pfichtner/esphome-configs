@@ -10,9 +10,6 @@ packages:
 esp8266:
   board: d1_mini
 
-ota:
-  - platform: esphome
-
 #enable logger
 logger:
 
@@ -36,7 +33,6 @@ light:
 time:
   - platform: sntp
     id: sntp_time
-    timezone: Europe/Berlin
 
 font:
   - file:

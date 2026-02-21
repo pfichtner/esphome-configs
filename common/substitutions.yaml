@@ -1,8 +1,9 @@
 substitutions:
   publish_heartbeat: 60s
-# time
+
+  # time
   time_timezone: "!secret home_timezone"
-  time_servers: sntp
-# sun
+
+  # sun
   sun_latitude: "!secret home_latitude"
   sun_longitude: "!secret home_longitude"
