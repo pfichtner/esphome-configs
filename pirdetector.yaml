@@ -1,0 +1,57 @@
+esphome:
+  name: pirdetector
+
+esp8266:
+  board: d1_mini
+
+<<: !include common/substitutions.yaml
+packages: 
+  wifi: !include common/wifi.yaml
+  mqtt: !include common/mqtt.yaml
+  management: !include common/management.yaml
+
+# Enable logging
+logger:
+
+output:
+  - platform: gpio
+    pin: D4
+    id: onboard_led
+    inverted: True
+
+globals:
+  - id: motion_state_change_time
+    type: int
+    restore_value: no
+    initial_value: '0'
+
+binary_sensor:
+  - platform: gpio
+    pin: 
+      number: D5
+      mode: INPUT_PULLUP
+      inverted: True
+    name: "PIR Motion Sensor"
+    device_class: motion
+    on_release:
+      then:
+        - output.turn_on: onboard_led
+        - mqtt.publish:
+            topic: home/motion/off
+            payload: !lambda |-
+              int duration = millis() - id(motion_state_change_time);
+              return to_string(duration) + " ms";
+        - globals.set:
+            id: motion_state_change_time
+            value: !lambda 'return millis();'
+    on_press:
+      then:
+        - output.turn_off: onboard_led
+        - mqtt.publish:
+            topic: home/motion/on
+            payload: !lambda |-
+              int duration = millis() - id(motion_state_change_time);
+              return to_string(duration) + " ms";
+        - globals.set:
+            id: motion_state_change_time
+            value: !lambda 'return millis();'
