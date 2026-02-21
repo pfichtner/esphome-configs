@@ -20,7 +20,6 @@ packages:
   management: !include common/management.yaml
 
 substitutions:
-  status_led: GPIO2
   icon_sun_nok : "☼"
   icon_sun_ok : "❄"
   icon_elevation_ok : "✓"
@@ -119,7 +118,7 @@ sensor:
 
 binary_sensor:
   - platform: gpio
-    pin: GPIO14
+    pin: D5
     name: 'power'
     filters:
       - delayed_on_off: 50 ms
@@ -147,7 +146,9 @@ binary_sensor:
       - display.page.show_next: oled
       - component.update: oled
   - platform: gpio
-    pin: D4
+    pin: 
+      number: D4
+      allow_other_uses: true # pin is led and shield button
     id: bbutton
     internal: true
     filters:
@@ -160,7 +161,9 @@ output:
   - platform: esp8266_pwm
     frequency: 200 Hz
     inverted: true
-    pin: $status_led
+    pin: 
+      number: D4
+      allow_other_uses: true # pin is led and shield button
     id: status_output
 
 i2c:
