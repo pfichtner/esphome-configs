@@ -5,9 +5,6 @@ esp8266:
   board: d1_mini
   # board: esp01
 
-esphome:
-  name: wifimonitor
-
 <<: !include common/substitutions.yaml
 packages: 
   wifi: !include common/wifi.yaml

@@ -72,7 +72,6 @@ switch:
 script:
   - id: watering_script
     then:
-    - logger.log: "Watering"
     - delay: 5s
     - switch.turn_on: relay
     - delay: 5s

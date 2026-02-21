@@ -1,6 +1,5 @@
 esphome:
   name: lebendfalle
-  platform: ESP8266
   on_boot:
     then:
       - script.execute: script_heartbeat
