@@ -1,11 +1,13 @@
 esphome:
   name: lebendfalle
   platform: ESP8266
-  board: d1_mini
-  # board: esp01
   on_boot:
     then:
       - script.execute: script_heartbeat
+
+esp8266:
+  board: d1_mini
+  # board: esp01
 
 <<: !include common/substitutions.yaml
 packages: 
