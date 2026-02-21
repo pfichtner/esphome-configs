@@ -1,14 +1,14 @@
 esphome:
   name: 433mhzreceiver
+  includes:
+    - "ArduinoSIP/SipSwitch.h"
 
 esp8266:
 # board: d1
   board: d1_mini
 
-libraries:
+# libraries:
 #    - https://github.com/dl9sec/ArduinoSIP.git#c4baefe
-  includes:
-    - "ArduinoSIP/SipSwitch.h"
 
 <<: !include common/substitutions.yaml
 packages: 
