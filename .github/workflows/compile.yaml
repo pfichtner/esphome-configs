@@ -1,6 +1,9 @@
 name: ESPHome CI Compile
 
 on:
+  schedule:
+  # each fifth day of month
+  - cron: "42 10 5 * *"
   push:
   pull_request:
   workflow_dispatch:
