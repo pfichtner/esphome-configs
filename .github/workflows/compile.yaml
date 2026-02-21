@@ -94,10 +94,14 @@ jobs:
       # --------------------------
       # Compile
       # --------------------------
+      - name: Ensure cache dir exists
+        run: mkdir -p .platformio
       - name: Compile ESPHome firmware
         run: |
           docker run --rm \
             --user $(id -u):$(id -g) \
+            -e HOME=/tmp \
+            -e PLATFORMIO_CORE_DIR=/cache \
             -v ${{ github.workspace }}:/config \
             -v ${{ github.workspace }}/.platformio:/cache \
             esphome/esphome:${{ steps.set_version.outputs.version }} \
