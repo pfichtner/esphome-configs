@@ -84,7 +84,7 @@ jobs:
             echo "${{ secrets.SECRETS_YAML }}" > secrets.yaml
             echo "Using repository secret"
           else
-            cp secrets-template.yaml secrets.yaml
+            cp .secrets-template.yaml secrets.yaml
             echo "Using template file"
           fi
 
