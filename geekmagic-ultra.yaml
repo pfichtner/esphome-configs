@@ -33,6 +33,13 @@ light:
 time:
   - platform: sntp
     id: sntp_time
+    timezone: !secret home_timezone
+    on_time_sync:
+      - component.update: display1
+    on_time:
+      - seconds: 0
+        then:
+          - component.update: display1
 
 font:
   - file:
@@ -53,6 +60,7 @@ font:
 
 display:
   - platform: mipi_spi
+    id: display1
     model: st7789v
     spi_id: spihwd
     dc_pin: GPIO00
@@ -63,7 +71,7 @@ display:
     dimensions:
       width: 240
       height: 240
-    update_interval: 5s
+    update_interval: 1min
     lambda: |-
       // Schwarzer Hintergrund
       it.fill(Color(0, 0, 0));
