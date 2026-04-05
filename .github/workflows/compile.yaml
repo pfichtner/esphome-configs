@@ -43,7 +43,12 @@ jobs:
           fi
   
           ALL_CHANGED=$(printf '%s\n' "${{ steps.changed.outputs.all_changed_files }}" | jq -R -s -c 'split("\n")[:-1]')
-          YAML_CHANGED=$(echo "$ALL_CHANGED" | jq '[.[] | select(test("^[^/]+\\.yaml$"))]')
+          YAML_CHANGED=$(echo "$ALL_CHANGED" | jq '
+            [ .[]
+              | select(test("^[^/]+\\.yaml$"))
+              | select(. != "secrets.yaml" and . != ".secrets-template.yaml")
+            ]
+          ')
   
           TOTAL=$(echo "$ALL_CHANGED" | jq 'length')
           YAML_COUNT=$(echo "$YAML_CHANGED" | jq 'length')

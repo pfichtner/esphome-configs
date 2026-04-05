@@ -1,5 +1,4 @@
-<<: !include substitutions.yaml
-
 time:
   - platform: sntp
-    timezone: ${time_timezone}
+    id: sntp_time
+    timezone: !secret home_timezone
